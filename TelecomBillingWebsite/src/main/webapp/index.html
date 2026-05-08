@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TelecoSmart - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .split-left {
+            flex: 1;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 50px;
+        }
+
+        .split-left h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .split-left p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .split-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            padding: 40px;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            background: white;
+            border: 1px solid var(--border-color);
+        }
+
+        .login-box h2 {
+            margin-bottom: 30px;
+            color: var(--text-main);
+            font-size: 1.8rem;
+            text-align: center;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1rem;
+            border-radius: var(--radius-md);
+        }
+
+        .error-msg {
+            color: var(--danger-color);
+            text-align: center;
+            margin-bottom: 15px;
+            min-height: 20px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="split-left">
+        <h1>Connect with Confidence</h1>
+        <p>Welcome to the next generation of Telecom Billing. Secure, fast, and transparent access to your plans and
+            invoices.</p>
+    </div>
+    <div class="split-right">
+        <div class="login-box">
+            <h2>Sign In</h2>
+            <div id="errorMsg" class="error-msg"></div>
+            <input id="username" placeholder="Email or Username" autocomplete="username">
+            <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+            <button class="btn-primary" onclick="login()">Continue</button>
+        </div>
+    </div>
+    <script src="js/login.js"></script>
+</body>
+
+</html>
