@@ -1,4 +1,36 @@
+# 🔴 Maven target folder (compiled files)
 target/
-test/
+
+# 🔴 Compiled class files
 *.class
+
+# 🔴 Logs
 *.log
+
+# 🔴 IDE files
+.idea/
+*.iml
+.vscode/
+
+# 🔴 OS files
+.DS_Store
+Thumbs.db
+
+# 🔴 Environment / configs
+.env
+
+# 🔴 Temporary files
+*.tmp
+*.swp
+
+/AggregationEngine/src/main/resources/application.properties
+
+/AggregationEngine/target/*
+
+# credentials database file
+/ratingEngine/src/main/java/com/telecomsmart/services/DatabaseManager.java
+
+.codebuddy/
+
+# Parser credentials database file
+/parser_module/src/main/java/com/mycompany/telecombillingparser/DatabaseConfig.java

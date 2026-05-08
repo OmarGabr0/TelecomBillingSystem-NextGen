@@ -1,0 +1,103 @@
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: #0b3d91;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 22px;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td, th {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .total {
+            font-weight: bold;
+            background-color: #e6f2ff;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="header">
+    Telecom Smart
+</div>
+
+<div class="container">
+
+    <!-- Customer Info -->
+    <div class="section">
+        <div class="section-title">Customer Information</div>
+        <p><b>Customer ID:</b> {{customerId}}</p>
+        <p><b>Customer Name:</b> {{customerName}}</p>
+        <p><b>Email:</b> {{email}}</p>
+        <p><b>Address:</b> {{address}}</p>
+    </div>
+
+    <!-- Billing Info -->
+    <div class="section">
+        <div class="section-title">Billing Details</div>
+        <p><b>Contract:</b> {{contractId}}</p>
+        <p><b>Rate Plan:</b> {{ratePlan}}</p>
+        <p><b>Period:</b> {{start}} → {{end}}</p>
+    </div>
+
+    <!-- Charges -->
+    <div class="section">
+        <div class="section-title">Charges</div>
+
+        <table>
+            <tr>
+                <th>Description</th>
+                <th>Amount</th>
+            </tr>
+
+            <tr><td>Monthly Fees</td><td>{{monthly}}</td></tr>
+            <tr><td>Recurring Fees</td><td>{{recurring}}</td></tr>
+            <tr><td>One-Time Fees</td><td>{{oneTime}}</td></tr>
+            <tr><td>Usage (ROR)</td><td>{{ror}}</td></tr>
+            <tr><td>Discount</td><td>{{discount}}</td></tr>
+            <tr><td>Subtotal</td><td>{{subtotal}}</td></tr>
+            <tr><td>Tax</td><td>{{tax}}</td></tr>
+            <tr class="total"><td>Total</td><td>{{total}}</td></tr>
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>

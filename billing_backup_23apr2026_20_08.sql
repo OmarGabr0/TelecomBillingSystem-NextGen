@@ -1,0 +1,2224 @@
+--
+-- PostgreSQL database dump
+--
+
+\restrict jW66roVPk8hsnktGTJnANj6lRuOao3Gh6smw75sqrZB0gLhZjtF9UnqlBzSyuPv
+
+-- Dumped from database version 17.8 (130b160)
+-- Dumped by pg_dump version 17.9
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: move_to_cdr_del(); Type: FUNCTION; Schema: public; Owner: neondb_owner
+--
+
+CREATE FUNCTION public.move_to_cdr_del() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    -- 'OLD' represents the exact row that the Rating Engine is trying to delete
+    INSERT INTO cdr_del (
+        cdr_id, msisdn, dial_b, service_id, 
+        duration_volume, external_fees_amount, cdr_timestamp
+    )
+    VALUES (
+        OLD.cdr_id, OLD.msisdn, OLD.dial_b, OLD.service_id, 
+        OLD.duration_volume, OLD.external_fees_amount, OLD.cdr_timestamp
+    );
+    
+    -- Tell the database to proceed with the deletion from the main table
+    RETURN OLD;
+END;
+$$;
+
+
+ALTER FUNCTION public.move_to_cdr_del() OWNER TO neondb_owner;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: bill; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.bill (
+    bill_id integer NOT NULL,
+    msisdn character varying(15) NOT NULL,
+    total_free_units bigint NOT NULL,
+    total_onetime_fee numeric(10,2) NOT NULL,
+    total_recurring numeric(10,2) NOT NULL,
+    total_usage numeric(10,2) NOT NULL,
+    taxes numeric(10,2) NOT NULL,
+    total_amount numeric(10,2) NOT NULL,
+    bill_date date NOT NULL,
+    bill_status character varying(20) NOT NULL
+);
+
+
+ALTER TABLE public.bill OWNER TO neondb_owner;
+
+--
+-- Name: bill_bill_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.bill_bill_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.bill_bill_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: bill_bill_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.bill_bill_id_seq OWNED BY public.bill.bill_id;
+
+
+--
+-- Name: cdr; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.cdr (
+    cdr_id integer NOT NULL,
+    msisdn character varying(15) NOT NULL,
+    dial_b text NOT NULL,
+    service_id integer NOT NULL,
+    duration_volume bigint NOT NULL,
+    external_fees_amount numeric(10,2) NOT NULL,
+    cdr_timestamp timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public.cdr OWNER TO neondb_owner;
+
+--
+-- Name: cdr_cdr_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.cdr_cdr_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.cdr_cdr_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: cdr_cdr_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.cdr_cdr_id_seq OWNED BY public.cdr.cdr_id;
+
+
+--
+-- Name: cdr_del; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.cdr_del (
+    cdr_id integer,
+    msisdn character varying(50),
+    dial_b character varying(50),
+    service_id integer,
+    duration_volume integer,
+    external_fees_amount numeric,
+    cdr_timestamp timestamp without time zone,
+    deleted_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
+);
+
+
+ALTER TABLE public.cdr_del OWNER TO neondb_owner;
+
+--
+-- Name: contract; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.contract (
+    msisdn character varying(15) NOT NULL,
+    credit_limit integer NOT NULL,
+    balance numeric(10,2) NOT NULL,
+    customer_id integer NOT NULL,
+    rateplan_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public.contract OWNER TO neondb_owner;
+
+--
+-- Name: contract_fee; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.contract_fee (
+    msisdn character varying(15) NOT NULL,
+    fee_id integer NOT NULL
+);
+
+
+ALTER TABLE public.contract_fee OWNER TO neondb_owner;
+
+--
+-- Name: contract_recurring; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.contract_recurring (
+    msisdn character varying(15) NOT NULL,
+    recurring_id integer NOT NULL
+);
+
+
+ALTER TABLE public.contract_recurring OWNER TO neondb_owner;
+
+--
+-- Name: customer; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.customer (
+    customer_id integer NOT NULL,
+    email character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    address character varying(255) NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public.customer OWNER TO neondb_owner;
+
+--
+-- Name: customer_customer_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.customer_customer_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.customer_customer_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: customer_customer_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.customer_customer_id_seq OWNED BY public.customer.customer_id;
+
+
+--
+-- Name: customer_profile; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.customer_profile (
+    msisdn character varying(15) NOT NULL,
+    credit_limit integer NOT NULL,
+    ror_usage numeric(10,2) NOT NULL,
+    rateplan_id integer NOT NULL,
+    free_data_units bigint NOT NULL,
+    free_voice_units bigint NOT NULL,
+    free_sms_units bigint NOT NULL
+);
+
+
+ALTER TABLE public.customer_profile OWNER TO neondb_owner;
+
+--
+-- Name: invoice; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.invoice (
+    invoice_id integer NOT NULL,
+    bill_id integer NOT NULL,
+    pdf_path character varying(255) NOT NULL,
+    discount numeric(10,2) NOT NULL,
+    generated_at date NOT NULL,
+    invoice_status character varying(20) NOT NULL
+);
+
+
+ALTER TABLE public.invoice OWNER TO neondb_owner;
+
+--
+-- Name: invoice_invoice_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.invoice_invoice_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.invoice_invoice_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: invoice_invoice_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.invoice_invoice_id_seq OWNED BY public.invoice.invoice_id;
+
+
+--
+-- Name: onetime_fee; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.onetime_fee (
+    fee_id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    description text,
+    amount numeric(10,2) NOT NULL,
+    date_apply date NOT NULL
+);
+
+
+ALTER TABLE public.onetime_fee OWNER TO neondb_owner;
+
+--
+-- Name: onetime_fee_fee_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.onetime_fee_fee_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.onetime_fee_fee_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: onetime_fee_fee_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.onetime_fee_fee_id_seq OWNED BY public.onetime_fee.fee_id;
+
+
+--
+-- Name: rated_cdr; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.rated_cdr (
+    rated_cdr_id integer NOT NULL,
+    cdr_id integer NOT NULL,
+    cdr_status character varying(5) NOT NULL,
+    processed_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+ALTER TABLE public.rated_cdr OWNER TO neondb_owner;
+
+--
+-- Name: rated_cdr_rated_cdr_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.rated_cdr_rated_cdr_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.rated_cdr_rated_cdr_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: rated_cdr_rated_cdr_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.rated_cdr_rated_cdr_id_seq OWNED BY public.rated_cdr.rated_cdr_id;
+
+
+--
+-- Name: rateplan; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.rateplan (
+    rateplan_id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    ror numeric(10,2) NOT NULL,
+    description text,
+    plan_price numeric(10,2) NOT NULL
+);
+
+
+ALTER TABLE public.rateplan OWNER TO neondb_owner;
+
+--
+-- Name: rateplan_rateplan_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.rateplan_rateplan_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.rateplan_rateplan_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: rateplan_rateplan_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.rateplan_rateplan_id_seq OWNED BY public.rateplan.rateplan_id;
+
+
+--
+-- Name: rateplan_service_zone; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.rateplan_service_zone (
+    id integer NOT NULL,
+    rateplan_id integer NOT NULL,
+    service_id integer NOT NULL,
+    zone_id integer NOT NULL,
+    price_per_volume numeric(10,2) NOT NULL,
+    unit_deduction bigint DEFAULT 0
+);
+
+
+ALTER TABLE public.rateplan_service_zone OWNER TO neondb_owner;
+
+--
+-- Name: rateplan_service_zone_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.rateplan_service_zone_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.rateplan_service_zone_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: rateplan_service_zone_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.rateplan_service_zone_id_seq OWNED BY public.rateplan_service_zone.id;
+
+
+--
+-- Name: recurring_service; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.recurring_service (
+    recurring_id integer NOT NULL,
+    name character varying(255) NOT NULL,
+    description text,
+    amount numeric(10,2) NOT NULL,
+    bill_cycle character varying(50) NOT NULL
+);
+
+
+ALTER TABLE public.recurring_service OWNER TO neondb_owner;
+
+--
+-- Name: recurring_service_recurring_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.recurring_service_recurring_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.recurring_service_recurring_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: recurring_service_recurring_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.recurring_service_recurring_id_seq OWNED BY public.recurring_service.recurring_id;
+
+
+--
+-- Name: service_package; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.service_package (
+    service_id integer NOT NULL,
+    service_type integer NOT NULL,
+    description text,
+    rating_price numeric(10,2) NOT NULL,
+    free_units bigint NOT NULL,
+    zone_id integer NOT NULL
+);
+
+
+ALTER TABLE public.service_package OWNER TO neondb_owner;
+
+--
+-- Name: service_package_service_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.service_package_service_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.service_package_service_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: service_package_service_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.service_package_service_id_seq OWNED BY public.service_package.service_id;
+
+
+--
+-- Name: service_rateplan; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.service_rateplan (
+    service_id integer NOT NULL,
+    rateplan_id integer NOT NULL
+);
+
+
+ALTER TABLE public.service_rateplan OWNER TO neondb_owner;
+
+--
+-- Name: tariff_zone; Type: TABLE; Schema: public; Owner: neondb_owner
+--
+
+CREATE TABLE public.tariff_zone (
+    zone_id integer NOT NULL,
+    dial_prefix character varying(10) NOT NULL,
+    zone_name character varying(255) NOT NULL,
+    description text,
+    distenation_name character varying(255) NOT NULL
+);
+
+
+ALTER TABLE public.tariff_zone OWNER TO neondb_owner;
+
+--
+-- Name: tariff_zone_zone_id_seq; Type: SEQUENCE; Schema: public; Owner: neondb_owner
+--
+
+CREATE SEQUENCE public.tariff_zone_zone_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.tariff_zone_zone_id_seq OWNER TO neondb_owner;
+
+--
+-- Name: tariff_zone_zone_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: neondb_owner
+--
+
+ALTER SEQUENCE public.tariff_zone_zone_id_seq OWNED BY public.tariff_zone.zone_id;
+
+
+--
+-- Name: bill bill_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.bill ALTER COLUMN bill_id SET DEFAULT nextval('public.bill_bill_id_seq'::regclass);
+
+
+--
+-- Name: cdr cdr_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.cdr ALTER COLUMN cdr_id SET DEFAULT nextval('public.cdr_cdr_id_seq'::regclass);
+
+
+--
+-- Name: customer customer_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.customer ALTER COLUMN customer_id SET DEFAULT nextval('public.customer_customer_id_seq'::regclass);
+
+
+--
+-- Name: invoice invoice_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.invoice ALTER COLUMN invoice_id SET DEFAULT nextval('public.invoice_invoice_id_seq'::regclass);
+
+
+--
+-- Name: onetime_fee fee_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.onetime_fee ALTER COLUMN fee_id SET DEFAULT nextval('public.onetime_fee_fee_id_seq'::regclass);
+
+
+--
+-- Name: rated_cdr rated_cdr_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rated_cdr ALTER COLUMN rated_cdr_id SET DEFAULT nextval('public.rated_cdr_rated_cdr_id_seq'::regclass);
+
+
+--
+-- Name: rateplan rateplan_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rateplan ALTER COLUMN rateplan_id SET DEFAULT nextval('public.rateplan_rateplan_id_seq'::regclass);
+
+
+--
+-- Name: rateplan_service_zone id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rateplan_service_zone ALTER COLUMN id SET DEFAULT nextval('public.rateplan_service_zone_id_seq'::regclass);
+
+
+--
+-- Name: recurring_service recurring_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.recurring_service ALTER COLUMN recurring_id SET DEFAULT nextval('public.recurring_service_recurring_id_seq'::regclass);
+
+
+--
+-- Name: service_package service_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.service_package ALTER COLUMN service_id SET DEFAULT nextval('public.service_package_service_id_seq'::regclass);
+
+
+--
+-- Name: tariff_zone zone_id; Type: DEFAULT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.tariff_zone ALTER COLUMN zone_id SET DEFAULT nextval('public.tariff_zone_zone_id_seq'::regclass);
+
+
+--
+-- Data for Name: bill; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.bill (bill_id, msisdn, total_free_units, total_onetime_fee, total_recurring, total_usage, taxes, total_amount, bill_date, bill_status) FROM stdin;
+\.
+
+
+--
+-- Data for Name: cdr; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.cdr (cdr_id, msisdn, dial_b, service_id, duration_volume, external_fees_amount, cdr_timestamp) FROM stdin;
+1	00201687162534	http://www.youtube.com	3	15058639	0.00	2026-04-21 00:24:59
+2	00201639485762	http://www.facebook.com	3	59890803	15.00	2026-04-21 00:40:54
+3	00201684759203	0020101739504	1	492	35.00	2026-04-21 00:15:52
+4	00201650394821	0020151591266	1	37	47.00	2026-04-21 00:31:19
+5	00201639485762	http://www.facebook.com	3	55257373	10.00	2026-04-21 00:04:47
+6	00201645372819	00201656273849	2	4	0.00	2026-04-21 00:19:40
+7	00201682736450	http://www.whatsapp.com	3	67459889	0.00	2026-04-21 00:31:50
+8	00201648592031	0020114933513	2	1	20.00	2026-04-21 00:12:41
+9	00201650394821	http://www.facebook.com	3	53502166	15.00	2026-04-21 23:57:54
+10	00201627384950	00201682736450	2	4	0.00	2026-04-21 00:36:41
+11	00201657483920	00201639485762	2	4	0.00	2026-04-21 00:42:10
+12	00201639485762	00201656273849	1	453	0.00	2026-04-21 00:45:40
+13	00201682736450	0020129251650	2	3	10.00	2026-04-21 00:26:47
+14	00201610293847	00201691827364	1	421	0.00	2026-04-21 00:14:19
+15	00201690485721	0020154126017	1	266	25.00	2026-04-21 00:53:10
+16	00201687162534	00201656273849	1	325	0.00	2026-04-21 00:30:22
+17	00201691827364	0020151531684	2	3	10.00	2026-04-21 00:41:20
+18	00201627384950	00201684759203	1	426	0.00	2026-04-21 00:36:05
+19	00201693847562	http://www.google.com	3	57422085	0.00	2026-04-21 00:37:35
+20	00201619283745	00201645372819	2	2	0.00	2026-04-21 23:59:45
+21	00201650394821	http://www.facebook.com	3	4075464	15.00	2026-04-21 00:50:53
+22	00201634592817	http://www.youtube.com	3	2579257	15.00	2026-04-21 23:58:37
+23	00201650394821	http://www.whatsapp.com	3	43490782	10.00	2026-04-21 23:59:59
+24	00201623948576	00201639485762	2	5	0.00	2026-04-21 00:51:09
+25	00201690485721	0020122362553	2	4	20.00	2026-04-21 00:03:36
+26	00201628374619	0020118478187	1	314	13.00	2026-04-21 00:36:44
+27	00201693847562	http://www.youtube.com	3	6738745	0.00	2026-04-21 00:41:07
+28	00201684759203	http://www.facebook.com	3	44073146	10.00	2026-04-21 00:36:09
+29	00201660495837	00201682736450	1	406	0.00	2026-04-21 00:43:15
+30	00201678192034	http://www.whatsapp.com	3	96305657	10.00	2026-04-21 00:06:15
+31	00201610293847	http://www.google.com	3	58481169	15.00	2026-04-21 00:05:44
+32	00201610293847	00201656273849	2	4	0.00	2026-04-21 23:59:19
+33	00201639485762	00201656273849	1	15	0.00	2026-04-21 00:30:31
+34	00201645372819	0020102223098	2	1	10.00	2026-04-21 00:26:07
+35	00201682736450	http://www.youtube.com	3	74338102	15.00	2026-04-21 00:33:59
+36	00201678192034	00201656273849	1	229	0.00	2026-04-21 00:54:35
+37	00201691827364	00201682736450	1	385	0.00	2026-04-21 00:50:17
+38	00201693847562	00201687162534	2	3	0.00	2026-04-21 00:19:56
+39	00201656273849	00201639485762	1	583	0.00	2026-04-21 00:14:08
+40	00201682736450	0020125128175	1	346	41.00	2026-04-21 00:45:28
+41	00201650394821	http://www.whatsapp.com	3	100868317	0.00	2026-04-21 00:05:25
+42	00201682736450	00201691827364	1	260	0.00	2026-04-21 00:33:12
+43	00201627384950	0020129595455	2	2	10.00	2026-04-21 00:03:23
+44	00201648592031	http://www.whatsapp.com	3	7005138	15.00	2026-04-21 00:15:41
+45	00201645372819	0020108088656	1	573	15.00	2026-04-21 00:39:50
+46	00201628374619	0020125702427	1	351	27.00	2026-04-21 00:56:01
+47	00201623948576	0020124964961	2	5	10.00	2026-04-21 00:08:20
+48	00201660495837	00201639485762	2	5	0.00	2026-04-21 00:36:41
+49	00201684759203	0020122533332	1	33	37.00	2026-04-21 00:14:02
+51	00201682736450	http://www.whatsapp.com	3	56829366	15.00	2026-04-21 00:14:33
+52	00201610293847	0020111229018	2	1	10.00	2026-04-21 00:42:03
+53	00201645372819	00201690485721	1	573	0.00	2026-04-21 00:02:34
+54	00201678192034	0020153092759	2	1	20.00	2026-04-21 00:25:33
+55	00201650394821	0020157238809	2	3	10.00	2026-04-21 00:14:43
+56	00201656273849	http://www.whatsapp.com	3	74111975	0.00	2026-04-21 00:01:26
+57	00201648592031	00201623948576	2	5	0.00	2026-04-21 00:55:25
+58	00201610293847	http://www.google.com	3	85892107	15.00	2026-04-21 23:57:02
+59	00201684759203	0020119513520	2	3	10.00	2026-04-21 00:05:03
+60	00201691827364	00201678192034	1	298	0.00	2026-04-21 00:27:58
+61	00201660495837	http://www.youtube.com	3	81228236	10.00	2026-04-21 00:40:05
+62	00201684759203	0020106153816	1	592	16.00	2026-04-21 00:09:53
+63	00201628374619	00201656273849	1	295	0.00	2026-04-21 00:31:18
+64	00201660495837	0020105555142	1	201	12.00	2026-04-21 00:33:00
+65	00201656273849	0020111426402	1	52	36.00	2026-04-21 00:00:51
+66	00201628374619	http://www.facebook.com	3	96327576	0.00	2026-04-21 00:51:06
+67	00201678192034	http://www.whatsapp.com	3	3274230	0.00	2026-04-21 00:47:22
+68	00201623948576	0020109766432	2	1	10.00	2026-04-21 00:48:45
+69	00201650394821	00201678192034	1	318	0.00	2026-04-21 23:58:05
+70	00201610293847	0020158323411	2	4	20.00	2026-04-21 00:27:46
+71	00201690485721	00201639485762	2	5	0.00	2026-04-21 00:08:29
+72	00201684759203	00201678192034	1	513	0.00	2026-04-21 00:41:10
+73	00201690485721	http://www.facebook.com	3	41300657	10.00	2026-04-21 00:11:18
+74	00201634592817	http://www.whatsapp.com	3	12835070	0.00	2026-04-21 00:03:22
+75	00201648592031	0020152574151	1	431	40.00	2026-04-21 00:16:59
+76	00201678192034	0020101769013	2	2	20.00	2026-04-21 00:18:32
+77	00201684759203	00201634592817	2	3	0.00	2026-04-21 00:07:41
+78	00201619283745	http://www.google.com	3	35228553	15.00	2026-04-21 00:19:27
+79	00201656273849	0020113901611	2	4	20.00	2026-04-21 23:58:11
+80	00201687162534	00201656273849	2	4	0.00	2026-04-21 00:10:01
+81	00201610293847	http://www.youtube.com	3	55920238	0.00	2026-04-21 00:56:02
+82	00201684759203	00201678192034	1	323	0.00	2026-04-21 00:30:06
+83	00201690485721	00201650394821	1	466	0.00	2026-04-21 00:17:12
+84	00201610293847	http://www.facebook.com	3	77927175	10.00	2026-04-21 00:24:25
+85	00201650394821	0020102197182	2	4	20.00	2026-04-21 00:36:56
+86	00201610293847	http://www.facebook.com	3	73160692	10.00	2026-04-21 00:32:26
+87	00201660495837	http://www.whatsapp.com	3	17372944	0.00	2026-04-21 00:25:29
+88	00201623948576	00201628374619	1	519	0.00	2026-04-21 00:17:47
+89	00201639485762	0020107804718	1	528	28.00	2026-04-21 00:47:30
+90	00201623948576	http://www.whatsapp.com	3	67278984	10.00	2026-04-21 00:45:59
+91	00201678192034	00201619283745	2	2	0.00	2026-04-21 00:53:15
+92	00201639485762	00201610293847	1	190	0.00	2026-04-21 00:13:47
+93	00201639485762	0020157722771	1	239	27.00	2026-04-21 00:18:23
+94	00201628374619	0020114163464	2	1	10.00	2026-04-21 00:04:24
+95	00201657483920	http://www.facebook.com	3	5156915	15.00	2026-04-21 00:03:52
+96	00201628374619	http://www.facebook.com	3	22672870	0.00	2026-04-21 00:32:37
+97	00201684759203	00201657483920	2	1	0.00	2026-04-21 00:02:48
+98	00201610293847	00201660495837	1	56	0.00	2026-04-21 00:56:22
+99	00201660495837	00201648592031	2	1	0.00	2026-04-21 00:26:44
+100	00201678192034	http://www.google.com	3	75753996	0.00	2026-04-21 00:03:40
+101	00201645372819	0020155100324	2	4	20.00	2026-04-22 03:56:44
+102	00201619283745	http://www.google.com	3	87545784	15.00	2026-04-22 03:38:26
+103	00201657483920	00201684759203	1	27	0.00	2026-04-22 03:23:19
+104	00201648592031	http://www.whatsapp.com	3	92373105	15.00	2026-04-22 03:33:51
+105	00201657483920	0020152658775	2	3	20.00	2026-04-22 03:53:10
+106	00201650394821	00201610293847	2	4	0.00	2026-04-22 03:03:46
+107	00201690485721	0020159461341	2	5	20.00	2026-04-22 03:34:36
+108	00201687162534	0020113874075	1	146	32.00	2026-04-22 03:29:42
+109	00201660495837	00201650394821	2	4	0.00	2026-04-22 03:31:51
+110	00201678192034	00201645372819	2	5	0.00	2026-04-22 03:36:37
+111	00201628374619	http://www.youtube.com	3	39461178	0.00	2026-04-22 03:46:17
+112	00201619283745	00201634592817	2	2	0.00	2026-04-22 03:26:16
+113	00201684759203	00201693847562	1	276	0.00	2026-04-22 03:44:26
+114	00201690485721	0020109777489	2	3	20.00	2026-04-22 03:26:08
+115	00201691827364	http://www.youtube.com	3	60882090	0.00	2026-04-22 03:26:14
+116	00201628374619	00201657483920	1	372	0.00	2026-04-22 03:54:27
+117	00201657483920	00201656273849	1	208	0.00	2026-04-22 03:31:04
+118	00201657483920	http://www.google.com	3	29815950	10.00	2026-04-22 02:58:01
+119	00201657483920	http://www.whatsapp.com	3	59803904	10.00	2026-04-22 03:04:09
+120	00201691827364	00201628374619	2	1	0.00	2026-04-22 03:16:39
+121	00201628374619	http://www.youtube.com	3	47200996	15.00	2026-04-22 03:09:27
+122	00201648592031	http://www.google.com	3	57733190	0.00	2026-04-22 03:24:26
+123	00201660495837	http://www.facebook.com	3	56349568	15.00	2026-04-22 03:23:49
+124	00201650394821	0020116692862	2	2	10.00	2026-04-22 03:41:26
+125	00201623948576	00201682736450	2	5	0.00	2026-04-22 03:33:00
+126	00201650394821	http://www.youtube.com	3	78562352	0.00	2026-04-22 03:32:49
+127	00201687162534	http://www.youtube.com	3	97995435	10.00	2026-04-22 03:06:22
+128	00201634592817	0020111888822	1	30	35.00	2026-04-22 03:49:31
+129	00201650394821	http://www.google.com	3	98004980	0.00	2026-04-22 03:01:59
+130	00201687162534	http://www.google.com	3	95005672	15.00	2026-04-22 03:52:01
+131	00201619283745	00201627384950	2	3	0.00	2026-04-22 03:32:17
+132	00201684759203	http://www.youtube.com	3	43086312	10.00	2026-04-22 03:07:04
+133	00201619283745	0020112729500	2	5	20.00	2026-04-22 03:00:08
+134	00201610293847	0020151329599	2	4	20.00	2026-04-22 03:19:23
+135	00201660495837	0020119904686	1	65	16.00	2026-04-22 03:22:00
+136	00201657483920	http://www.youtube.com	3	96169809	15.00	2026-04-22 03:28:53
+137	00201682736450	00201687162534	1	164	0.00	2026-04-22 03:28:06
+138	00201690485721	00201684759203	1	488	0.00	2026-04-22 03:34:25
+139	00201645372819	0020105776609	1	336	22.00	2026-04-22 03:29:43
+140	00201690485721	http://www.google.com	3	97145242	15.00	2026-04-22 03:55:13
+141	00201687162534	http://www.youtube.com	3	36575039	0.00	2026-04-22 03:07:57
+142	00201660495837	0020112780236	1	510	46.00	2026-04-22 03:39:45
+143	00201627384950	0020114157194	2	5	20.00	2026-04-22 03:47:31
+144	00201627384950	0020122796447	1	50	42.00	2026-04-22 03:00:42
+145	00201682736450	http://www.whatsapp.com	3	55279846	0.00	2026-04-22 03:45:27
+146	00201650394821	0020158098205	1	251	48.00	2026-04-22 03:10:45
+147	00201691827364	00201687162534	1	336	0.00	2026-04-22 03:51:31
+148	00201690485721	http://www.facebook.com	3	82161450	0.00	2026-04-22 03:05:18
+149	00201660495837	http://www.google.com	3	93353977	0.00	2026-04-22 03:09:51
+150	00201610293847	0020128356171	2	4	10.00	2026-04-22 03:03:45
+151	00201610293847	00201682736450	1	243	0.00	2026-04-22 03:08:26
+152	00201619283745	0020101273848	1	440	14.00	2026-04-22 03:39:10
+153	00201619283745	0020123885667	1	272	18.00	2026-04-22 03:39:37
+154	00201657483920	http://www.whatsapp.com	3	43050498	0.00	2026-04-22 03:40:30
+155	00201619283745	http://www.google.com	3	70448983	15.00	2026-04-22 03:27:18
+156	00201650394821	http://www.youtube.com	3	98980923	10.00	2026-04-22 03:24:11
+157	00201687162534	http://www.facebook.com	3	39479859	15.00	2026-04-22 03:42:55
+158	00201693847562	http://www.facebook.com	3	82450527	10.00	2026-04-22 03:33:42
+159	00201650394821	http://www.google.com	3	45772381	10.00	2026-04-22 03:01:19
+160	00201650394821	http://www.whatsapp.com	3	85677349	15.00	2026-04-22 03:24:04
+161	00201678192034	00201639485762	1	293	0.00	2026-04-22 03:32:10
+162	00201650394821	0020109979165	2	2	20.00	2026-04-22 03:49:48
+163	00201690485721	0020122541780	1	544	36.00	2026-04-22 03:33:41
+164	00201656273849	0020157856528	1	133	12.00	2026-04-22 03:34:13
+165	00201656273849	http://www.facebook.com	3	88128969	0.00	2026-04-22 03:18:46
+166	00201693847562	http://www.youtube.com	3	59416927	10.00	2026-04-22 02:57:49
+167	00201645372819	http://www.facebook.com	3	64974687	10.00	2026-04-22 03:34:33
+168	00201678192034	0020155469563	2	3	20.00	2026-04-22 03:40:12
+169	00201648592031	0020159381783	1	259	30.00	2026-04-22 02:58:16
+170	00201610293847	0020106888282	2	5	20.00	2026-04-22 03:43:25
+171	00201623948576	00201678192034	1	386	0.00	2026-04-22 03:13:46
+172	00201693847562	00201660495837	1	231	0.00	2026-04-22 03:14:05
+173	00201660495837	0020159307808	1	278	36.00	2026-04-22 03:46:18
+174	00201619283745	http://www.whatsapp.com	3	64164128	0.00	2026-04-22 03:05:12
+175	00201648592031	00201693847562	2	1	0.00	2026-04-22 03:38:11
+176	00201682736450	0020125672945	1	229	36.00	2026-04-22 03:39:19
+177	00201634592817	00201623948576	2	1	0.00	2026-04-22 03:07:55
+178	00201619283745	0020124062079	2	5	20.00	2026-04-22 03:11:04
+179	00201619283745	0020121877210	2	2	10.00	2026-04-22 03:44:04
+180	00201660495837	00201628374619	2	4	0.00	2026-04-22 03:38:12
+181	00201645372819	http://www.facebook.com	3	86120697	10.00	2026-04-22 03:38:02
+182	00201639485762	http://www.google.com	3	70312520	10.00	2026-04-22 03:21:18
+183	00201627384950	0020126343967	1	326	28.00	2026-04-22 03:00:52
+184	00201693847562	00201623948576	1	198	0.00	2026-04-22 03:22:16
+185	00201656273849	00201619283745	1	101	0.00	2026-04-22 03:10:42
+186	00201623948576	http://www.whatsapp.com	3	17568240	15.00	2026-04-22 03:53:22
+187	00201656273849	00201660495837	1	74	0.00	2026-04-22 03:20:56
+188	00201657483920	00201619283745	2	5	0.00	2026-04-22 03:43:38
+189	00201656273849	00201678192034	2	2	0.00	2026-04-22 03:19:38
+190	00201684759203	0020113043421	1	372	41.00	2026-04-22 03:12:30
+191	00201660495837	http://www.google.com	3	24857377	15.00	2026-04-22 03:49:45
+192	00201650394821	0020126580160	2	2	20.00	2026-04-22 03:46:01
+193	00201648592031	http://www.youtube.com	3	43142858	10.00	2026-04-22 03:16:25
+194	00201650394821	00201690485721	2	2	0.00	2026-04-22 03:09:38
+195	00201645372819	00201623948576	2	5	0.00	2026-04-22 03:23:27
+196	00201691827364	http://www.google.com	3	54479228	10.00	2026-04-22 03:11:10
+197	00201657483920	00201639485762	1	192	0.00	2026-04-22 03:50:26
+198	00201660495837	0020122030314	2	4	10.00	2026-04-22 03:24:14
+199	00201639485762	0020118126815	2	3	20.00	2026-04-22 03:41:19
+200	00201684759203	00201648592031	1	311	0.00	2026-04-22 03:35:15
+201	00201634592817	http://www.google.com	3	27897252	0.00	2026-04-21 23:50:00
+202	00201682736450	00201690485721	1	215	0.00	2026-04-21 23:03:25
+203	00201691827364	http://www.youtube.com	3	50172353	0.00	2026-04-21 23:28:55
+204	00201610293847	00201627384950	1	294	0.00	2026-04-21 22:57:24
+205	00201648592031	http://www.youtube.com	3	54576489	15.00	2026-04-21 23:13:16
+206	00201682736450	00201627384950	1	187	0.00	2026-04-21 23:06:24
+207	00201687162534	0020103757265	1	510	34.00	2026-04-21 23:41:56
+208	00201691827364	0020107373944	1	551	19.00	2026-04-21 23:15:26
+209	00201639485762	http://www.google.com	3	48140830	15.00	2026-04-21 23:06:11
+210	00201645372819	http://www.whatsapp.com	3	90689972	10.00	2026-04-21 23:18:40
+211	00201639485762	00201678192034	1	352	0.00	2026-04-21 23:13:47
+212	00201656273849	0020114450839	1	313	19.00	2026-04-21 23:33:27
+213	00201648592031	http://www.google.com	3	87083458	10.00	2026-04-21 23:28:56
+214	00201693847562	http://www.facebook.com	3	57556339	10.00	2026-04-21 23:40:12
+215	00201660495837	http://www.youtube.com	3	61550255	0.00	2026-04-21 23:15:43
+216	00201687162534	00201610293847	1	219	0.00	2026-04-21 23:10:14
+217	00201623948576	http://www.facebook.com	3	98493280	10.00	2026-04-21 23:40:13
+218	00201619283745	http://www.youtube.com	3	89153236	10.00	2026-04-21 23:43:15
+219	00201684759203	http://www.google.com	3	32032140	10.00	2026-04-21 23:33:12
+220	00201650394821	00201693847562	2	5	0.00	2026-04-21 23:24:57
+221	00201684759203	00201627384950	1	439	0.00	2026-04-21 23:15:02
+222	00201628374619	http://www.youtube.com	3	38430081	0.00	2026-04-21 23:45:04
+223	00201634592817	http://www.google.com	3	603142	0.00	2026-04-21 23:40:33
+224	00201619283745	http://www.whatsapp.com	3	101570933	15.00	2026-04-21 23:49:26
+225	00201627384950	0020108675587	2	2	10.00	2026-04-21 23:11:40
+226	00201619283745	00201693847562	2	3	0.00	2026-04-21 23:18:36
+227	00201656273849	00201645372819	1	557	0.00	2026-04-21 23:21:47
+228	00201648592031	http://www.youtube.com	3	11287268	0.00	2026-04-21 23:01:48
+229	00201682736450	http://www.facebook.com	3	19329817	15.00	2026-04-21 23:15:58
+230	00201693847562	00201682736450	2	5	0.00	2026-04-21 23:53:42
+231	00201691827364	0020116935186	1	212	39.00	2026-04-21 23:19:26
+232	00201639485762	http://www.youtube.com	3	72999198	15.00	2026-04-21 23:24:22
+233	00201645372819	00201650394821	1	48	0.00	2026-04-21 23:16:15
+234	00201684759203	http://www.youtube.com	3	25779829	15.00	2026-04-21 23:56:42
+235	00201650394821	http://www.youtube.com	3	104704621	10.00	2026-04-21 23:46:02
+236	00201684759203	00201693847562	2	4	0.00	2026-04-21 23:40:09
+237	00201682736450	0020116898874	2	1	20.00	2026-04-21 23:45:31
+238	00201682736450	http://www.facebook.com	3	24885074	10.00	2026-04-21 23:10:42
+239	00201648592031	00201660495837	1	113	0.00	2026-04-21 23:33:03
+240	00201682736450	00201645372819	2	1	0.00	2026-04-21 23:06:24
+241	00201634592817	0020122966715	2	3	20.00	2026-04-21 23:52:19
+242	00201684759203	00201639485762	2	3	0.00	2026-04-21 23:08:44
+243	00201690485721	http://www.whatsapp.com	3	74443078	15.00	2026-04-21 23:15:50
+244	00201634592817	http://www.facebook.com	3	13945947	15.00	2026-04-21 23:53:33
+245	00201656273849	00201623948576	1	466	0.00	2026-04-21 23:00:42
+246	00201639485762	http://www.facebook.com	3	60779195	15.00	2026-04-21 23:43:03
+247	00201693847562	http://www.youtube.com	3	100125460	10.00	2026-04-21 23:09:02
+248	00201639485762	00201678192034	2	3	0.00	2026-04-21 23:42:50
+249	00201623948576	http://www.google.com	3	78468850	15.00	2026-04-21 23:05:48
+250	00201645372819	http://www.youtube.com	3	4375605	10.00	2026-04-21 23:38:11
+251	00201628374619	00201650394821	1	342	0.00	2026-04-21 23:17:57
+252	00201682736450	0020123285321	2	2	20.00	2026-04-21 23:50:16
+253	00201693847562	00201610293847	1	16	0.00	2026-04-21 23:38:53
+254	00201645372819	http://www.whatsapp.com	3	14809510	15.00	2026-04-21 23:00:38
+255	00201687162534	http://www.facebook.com	3	88110642	0.00	2026-04-21 23:52:20
+256	00201648592031	00201678192034	2	5	0.00	2026-04-21 23:40:05
+257	00201645372819	http://www.youtube.com	3	14457163	0.00	2026-04-21 23:29:53
+258	00201690485721	00201687162534	1	327	0.00	2026-04-21 23:07:52
+259	00201645372819	0020102522441	2	3	10.00	2026-04-21 23:37:47
+260	00201691827364	0020112940174	2	4	20.00	2026-04-21 23:07:42
+261	00201628374619	00201634592817	2	3	0.00	2026-04-21 23:54:09
+262	00201639485762	http://www.youtube.com	3	60414000	0.00	2026-04-21 23:26:54
+263	00201691827364	00201645372819	2	5	0.00	2026-04-21 23:43:35
+264	00201656273849	00201678192034	1	77	0.00	2026-04-21 23:50:45
+265	00201623948576	00201684759203	2	3	0.00	2026-04-21 23:52:25
+266	00201690485721	00201628374619	1	15	0.00	2026-04-21 23:32:08
+267	00201684759203	00201634592817	1	182	0.00	2026-04-21 23:45:30
+268	00201610293847	http://www.google.com	3	35947742	0.00	2026-04-21 23:40:47
+269	00201645372819	00201610293847	1	332	0.00	2026-04-21 23:53:49
+270	00201619283745	0020123476729	1	313	32.00	2026-04-21 23:47:54
+271	00201691827364	0020101005214	1	312	19.00	2026-04-21 23:37:39
+272	00201610293847	00201634592817	1	27	0.00	2026-04-21 23:21:06
+273	00201650394821	http://www.whatsapp.com	3	86488014	10.00	2026-04-21 23:18:04
+274	00201657483920	http://www.youtube.com	3	45746408	0.00	2026-04-21 23:35:49
+275	00201645372819	0020158079212	1	29	21.00	2026-04-21 23:40:51
+276	00201684759203	00201678192034	1	205	0.00	2026-04-21 23:51:11
+277	00201693847562	http://www.whatsapp.com	3	50701959	10.00	2026-04-21 23:53:23
+278	00201627384950	http://www.youtube.com	3	34461027	15.00	2026-04-21 23:12:08
+279	00201684759203	0020118575887	2	4	10.00	2026-04-21 23:31:04
+280	00201656273849	0020108285163	2	5	10.00	2026-04-21 22:59:25
+281	00201639485762	http://www.facebook.com	3	79611109	0.00	2026-04-21 23:01:48
+282	00201623948576	00201645372819	1	402	0.00	2026-04-21 23:55:57
+283	00201628374619	00201656273849	2	2	0.00	2026-04-21 23:19:04
+284	00201690485721	0020105401856	1	444	14.00	2026-04-21 23:38:37
+285	00201645372819	http://www.google.com	3	85366326	10.00	2026-04-21 23:28:48
+286	00201634592817	00201627384950	1	474	0.00	2026-04-21 23:45:04
+287	00201619283745	http://www.whatsapp.com	3	9446848	10.00	2026-04-21 23:52:11
+288	00201650394821	0020126274736	1	96	33.00	2026-04-21 23:12:00
+289	00201691827364	0020128361502	1	473	42.00	2026-04-21 23:12:10
+290	00201650394821	00201660495837	1	209	0.00	2026-04-21 23:31:23
+291	00201660495837	00201623948576	2	3	0.00	2026-04-21 23:32:12
+292	00201660495837	0020102902579	2	1	10.00	2026-04-21 23:29:25
+293	00201623948576	0020154443240	2	2	10.00	2026-04-21 23:05:05
+294	00201690485721	00201691827364	1	160	0.00	2026-04-21 23:46:42
+295	00201660495837	0020103475955	2	3	20.00	2026-04-21 23:26:31
+296	00201660495837	http://www.whatsapp.com	3	62899551	0.00	2026-04-21 23:30:18
+297	00201691827364	00201623948576	1	462	0.00	2026-04-21 23:41:37
+298	00201648592031	0020104256591	1	37	41.00	2026-04-21 23:55:48
+299	00201610293847	0020109615918	1	66	24.00	2026-04-21 23:22:22
+300	00201687162534	00201623948576	1	230	0.00	2026-04-21 23:05:53
+301	00201682736450	http://www.youtube.com	3	13656787	10.00	2026-04-22 01:53:51
+302	00201682736450	0020128009468	2	4	20.00	2026-04-22 01:22:20
+303	00201619283745	0020121074944	1	329	48.00	2026-04-22 01:37:21
+304	00201623948576	http://www.google.com	3	23357888	10.00	2026-04-22 01:28:27
+305	00201690485721	http://www.facebook.com	3	1860206	0.00	2026-04-22 01:12:49
+306	00201684759203	0020105098554	1	40	10.00	2026-04-22 01:23:00
+307	00201627384950	http://www.facebook.com	3	74811496	15.00	2026-04-22 01:07:09
+308	00201648592031	http://www.whatsapp.com	3	94323787	0.00	2026-04-22 01:08:32
+309	00201690485721	0020159942155	1	44	33.00	2026-04-22 01:27:46
+310	00201648592031	0020121591539	2	1	10.00	2026-04-22 01:34:31
+311	00201619283745	0020153127122	1	500	46.00	2026-04-22 01:48:27
+312	00201691827364	0020154496039	1	484	23.00	2026-04-22 01:51:18
+313	00201693847562	0020116486695	1	592	10.00	2026-04-22 01:06:10
+314	00201682736450	http://www.google.com	3	48645408	0.00	2026-04-22 01:15:47
+315	00201627384950	http://www.google.com	3	70308700	10.00	2026-04-22 01:55:26
+316	00201639485762	0020115323836	2	5	10.00	2026-04-22 01:15:30
+317	00201650394821	00201660495837	1	151	0.00	2026-04-22 01:05:08
+318	00201648592031	http://www.google.com	3	83482844	10.00	2026-04-22 01:42:34
+319	00201678192034	0020101418737	2	3	10.00	2026-04-22 01:33:39
+320	00201657483920	0020158813052	1	436	47.00	2026-04-22 01:51:31
+321	00201645372819	00201678192034	1	180	0.00	2026-04-22 01:22:18
+322	00201690485721	http://www.youtube.com	3	70457385	15.00	2026-04-22 01:46:37
+323	00201648592031	0020126667471	2	3	10.00	2026-04-22 01:16:36
+324	00201682736450	00201645372819	2	5	0.00	2026-04-22 01:49:17
+325	00201650394821	00201693847562	1	314	0.00	2026-04-22 01:27:58
+326	00201650394821	http://www.youtube.com	3	15267786	10.00	2026-04-22 01:44:26
+327	00201619283745	http://www.google.com	3	79001419	10.00	2026-04-22 01:28:33
+328	00201693847562	0020156028863	2	4	10.00	2026-04-22 01:55:02
+329	00201645372819	00201648592031	1	120	0.00	2026-04-22 01:25:12
+330	00201650394821	0020128236317	1	168	25.00	2026-04-22 01:50:37
+331	00201678192034	http://www.facebook.com	3	86083269	10.00	2026-04-22 01:41:04
+332	00201639485762	00201684759203	2	4	0.00	2026-04-22 00:58:35
+333	00201687162534	0020107165948	2	2	20.00	2026-04-22 01:20:50
+334	00201693847562	0020108956640	1	261	15.00	2026-04-22 01:11:03
+335	00201660495837	0020124998573	1	375	16.00	2026-04-22 00:57:34
+336	00201682736450	0020128944183	2	1	20.00	2026-04-22 01:38:22
+337	00201691827364	0020114244852	2	1	20.00	2026-04-22 01:32:37
+338	00201639485762	00201628374619	2	3	0.00	2026-04-22 01:31:45
+339	00201623948576	http://www.youtube.com	3	98098941	0.00	2026-04-22 01:07:30
+340	00201627384950	0020154176468	2	2	10.00	2026-04-22 01:41:49
+341	00201691827364	http://www.youtube.com	3	52005070	10.00	2026-04-22 01:07:05
+342	00201645372819	http://www.facebook.com	3	61885412	15.00	2026-04-22 01:27:18
+343	00201639485762	0020108963708	2	1	10.00	2026-04-22 01:43:44
+344	00201628374619	http://www.whatsapp.com	3	43897391	0.00	2026-04-22 01:54:36
+345	00201682736450	http://www.google.com	3	72171608	10.00	2026-04-22 01:27:18
+346	00201650394821	http://www.youtube.com	3	19304759	0.00	2026-04-22 01:14:29
+347	00201610293847	http://www.youtube.com	3	100068965	10.00	2026-04-22 01:53:21
+348	00201687162534	http://www.facebook.com	3	11672405	10.00	2026-04-22 01:37:45
+349	00201650394821	http://www.facebook.com	3	101296183	15.00	2026-04-22 01:02:36
+350	00201645372819	http://www.youtube.com	3	88364521	0.00	2026-04-22 01:25:18
+351	00201678192034	0020122897766	2	5	20.00	2026-04-22 01:45:29
+352	00201656273849	http://www.google.com	3	90401988	10.00	2026-04-22 01:36:08
+353	00201650394821	00201610293847	2	2	0.00	2026-04-22 00:57:12
+354	00201678192034	0020155317415	2	5	20.00	2026-04-22 01:08:31
+355	00201657483920	http://www.youtube.com	3	52729408	15.00	2026-04-22 01:44:29
+356	00201678192034	00201645372819	1	450	0.00	2026-04-22 01:38:28
+357	00201691827364	00201610293847	1	600	0.00	2026-04-22 00:57:34
+358	00201619283745	0020114589937	1	553	16.00	2026-04-22 01:03:35
+359	00201690485721	http://www.facebook.com	3	21578936	15.00	2026-04-22 01:15:58
+360	00201660495837	http://www.whatsapp.com	3	20607595	15.00	2026-04-22 01:46:43
+361	00201639485762	00201691827364	2	4	0.00	2026-04-22 01:50:35
+362	00201684759203	0020156824550	1	129	10.00	2026-04-22 01:06:15
+363	00201682736450	0020122978885	2	2	20.00	2026-04-22 01:06:55
+364	00201634592817	00201656273849	1	398	0.00	2026-04-22 01:30:05
+365	00201610293847	0020104121169	2	1	20.00	2026-04-22 01:34:27
+366	00201684759203	http://www.whatsapp.com	3	103778517	0.00	2026-04-22 01:21:42
+367	00201645372819	http://www.youtube.com	3	60202677	15.00	2026-04-22 01:07:16
+368	00201650394821	http://www.whatsapp.com	3	64481158	10.00	2026-04-22 01:48:55
+369	00201634592817	http://www.whatsapp.com	3	41558351	10.00	2026-04-22 01:04:01
+370	00201660495837	0020156607610	2	5	10.00	2026-04-22 01:32:20
+371	00201623948576	0020157374719	2	4	20.00	2026-04-22 01:33:37
+372	00201660495837	http://www.whatsapp.com	3	61849432	15.00	2026-04-22 01:01:00
+373	00201639485762	00201657483920	1	332	0.00	2026-04-22 01:07:28
+374	00201645372819	00201690485721	2	4	0.00	2026-04-22 01:20:41
+375	00201656273849	0020155021962	1	312	16.00	2026-04-22 01:25:59
+376	00201639485762	0020153741262	1	43	14.00	2026-04-22 01:24:56
+377	00201657483920	http://www.youtube.com	3	25436932	0.00	2026-04-22 01:25:14
+378	00201619283745	00201691827364	1	198	0.00	2026-04-22 01:50:23
+379	00201648592031	00201678192034	1	74	0.00	2026-04-22 01:15:15
+380	00201619283745	http://www.whatsapp.com	3	48960439	15.00	2026-04-22 01:01:48
+381	00201628374619	0020118928160	2	2	20.00	2026-04-22 01:45:01
+382	00201648592031	http://www.facebook.com	3	10729483	10.00	2026-04-22 01:25:00
+383	00201657483920	00201690485721	2	4	0.00	2026-04-22 01:13:45
+384	00201693847562	00201648592031	1	202	0.00	2026-04-22 01:43:59
+385	00201660495837	http://www.youtube.com	3	46733423	0.00	2026-04-22 01:32:36
+386	00201623948576	http://www.whatsapp.com	3	98998850	15.00	2026-04-22 00:59:14
+387	00201645372819	00201657483920	2	4	0.00	2026-04-22 01:39:59
+388	00201628374619	00201690485721	2	3	0.00	2026-04-22 01:48:43
+389	00201627384950	0020106767652	2	5	20.00	2026-04-22 01:32:08
+390	00201650394821	http://www.whatsapp.com	3	103181853	15.00	2026-04-22 01:20:53
+391	00201657483920	00201627384950	1	380	0.00	2026-04-22 01:54:50
+392	00201628374619	0020102376005	1	516	17.00	2026-04-22 01:09:22
+393	00201660495837	http://www.facebook.com	3	34503564	0.00	2026-04-22 01:50:47
+394	00201650394821	http://www.google.com	3	47491513	0.00	2026-04-22 01:09:22
+395	00201693847562	00201678192034	2	3	0.00	2026-04-22 01:54:21
+396	00201648592031	http://www.facebook.com	3	31582146	0.00	2026-04-22 00:59:43
+397	00201656273849	0020154002287	1	226	50.00	2026-04-22 01:34:24
+398	00201619283745	0020128481338	1	65	36.00	2026-04-22 01:38:51
+399	00201687162534	00201645372819	2	1	0.00	2026-04-22 01:03:36
+400	00201682736450	http://www.google.com	3	82605530	15.00	2026-04-22 01:25:41
+401	00201687162534	00201690485721	1	258	0.00	2026-04-22 02:38:18
+402	00201691827364	00201619283745	2	1	0.00	2026-04-22 02:19:12
+403	00201634592817	http://www.whatsapp.com	3	59246905	10.00	2026-04-22 02:28:56
+404	00201657483920	00201682736450	2	3	0.00	2026-04-22 02:52:11
+405	00201657483920	00201656273849	2	3	0.00	2026-04-22 02:23:48
+406	00201687162534	http://www.whatsapp.com	3	13220264	10.00	2026-04-22 01:57:35
+407	00201656273849	http://www.google.com	3	45281515	15.00	2026-04-22 02:15:37
+408	00201682736450	http://www.facebook.com	3	15385717	15.00	2026-04-22 02:22:13
+409	00201691827364	00201684759203	2	1	0.00	2026-04-22 02:03:33
+410	00201687162534	0020151597463	2	5	20.00	2026-04-22 02:10:11
+411	00201660495837	0020154420238	1	170	38.00	2026-04-22 02:19:14
+412	00201627384950	0020114567278	1	247	37.00	2026-04-22 02:16:21
+413	00201639485762	http://www.google.com	3	67077538	10.00	2026-04-22 02:24:35
+414	00201687162534	0020114734290	2	5	20.00	2026-04-22 02:27:28
+415	00201634592817	0020116693952	1	574	42.00	2026-04-22 02:07:28
+416	00201682736450	00201634592817	2	3	0.00	2026-04-22 02:22:12
+417	00201690485721	0020102791081	1	74	18.00	2026-04-22 02:42:56
+418	00201690485721	00201684759203	1	239	0.00	2026-04-22 02:37:46
+419	00201660495837	0020154705412	2	5	10.00	2026-04-22 02:15:00
+420	00201619283745	http://www.whatsapp.com	3	71141694	15.00	2026-04-22 02:41:14
+421	00201691827364	00201660495837	1	593	0.00	2026-04-22 02:53:23
+422	00201610293847	0020155383489	2	1	10.00	2026-04-22 02:21:05
+423	00201656273849	00201684759203	2	4	0.00	2026-04-22 02:27:43
+424	00201645372819	0020116699596	2	4	20.00	2026-04-22 02:41:23
+425	00201687162534	http://www.youtube.com	3	13725679	0.00	2026-04-22 01:57:12
+426	00201690485721	00201634592817	1	85	0.00	2026-04-22 02:40:36
+427	00201610293847	http://www.whatsapp.com	3	76764119	0.00	2026-04-22 02:23:10
+428	00201691827364	00201684759203	1	432	0.00	2026-04-22 02:16:13
+429	00201648592031	0020121471867	2	1	10.00	2026-04-22 02:33:59
+430	00201610293847	00201684759203	2	1	0.00	2026-04-22 02:14:07
+431	00201639485762	00201648592031	1	364	0.00	2026-04-22 02:29:40
+432	00201657483920	00201693847562	1	13	0.00	2026-04-22 02:40:55
+433	00201678192034	http://www.facebook.com	3	20523148	0.00	2026-04-22 02:34:17
+434	00201687162534	http://www.facebook.com	3	3663399	0.00	2026-04-22 02:27:13
+435	00201648592031	00201634592817	2	2	0.00	2026-04-22 01:58:44
+436	00201687162534	0020116324725	2	5	10.00	2026-04-22 02:49:16
+437	00201690485721	00201693847562	1	365	0.00	2026-04-22 02:03:16
+438	00201687162534	0020159856068	2	4	10.00	2026-04-22 02:05:59
+439	00201623948576	http://www.youtube.com	3	48947875	0.00	2026-04-22 02:53:25
+440	00201648592031	http://www.whatsapp.com	3	12216539	10.00	2026-04-22 02:25:45
+441	00201657483920	http://www.google.com	3	64541510	15.00	2026-04-22 02:03:23
+442	00201627384950	0020113151902	2	2	10.00	2026-04-22 02:53:57
+443	00201684759203	00201693847562	1	31	0.00	2026-04-22 02:34:13
+444	00201656273849	0020127456196	2	4	20.00	2026-04-22 02:17:40
+445	00201691827364	0020116792140	1	320	26.00	2026-04-22 02:21:46
+446	00201682736450	00201690485721	1	323	0.00	2026-04-22 02:50:24
+447	00201687162534	00201623948576	1	533	0.00	2026-04-22 02:34:16
+448	00201660495837	0020156832860	2	4	10.00	2026-04-22 02:23:15
+449	00201682736450	0020111408199	1	403	15.00	2026-04-22 02:07:28
+450	00201634592817	0020118423082	2	5	20.00	2026-04-22 02:11:54
+451	00201634592817	00201628374619	2	4	0.00	2026-04-22 02:22:39
+452	00201627384950	00201682736450	2	4	0.00	2026-04-22 02:34:46
+453	00201682736450	0020111863106	1	493	29.00	2026-04-22 02:56:04
+454	00201690485721	00201623948576	1	11	0.00	2026-04-22 02:50:46
+455	00201656273849	http://www.whatsapp.com	3	61876115	10.00	2026-04-22 01:58:27
+456	00201690485721	0020114499659	1	130	19.00	2026-04-22 02:06:46
+457	00201656273849	00201628374619	1	184	0.00	2026-04-22 02:51:01
+458	00201656273849	0020124738564	2	4	10.00	2026-04-22 02:21:43
+459	00201678192034	http://www.facebook.com	3	67501025	15.00	2026-04-22 02:30:15
+460	00201619283745	00201627384950	2	2	0.00	2026-04-22 01:56:58
+461	00201693847562	00201639485762	2	3	0.00	2026-04-22 02:11:32
+462	00201610293847	http://www.youtube.com	3	2920328	15.00	2026-04-22 02:51:10
+463	00201623948576	0020112958760	1	210	41.00	2026-04-22 02:36:11
+464	00201650394821	http://www.facebook.com	3	79011263	10.00	2026-04-22 02:47:19
+465	00201628374619	0020157893102	1	422	11.00	2026-04-22 02:41:46
+466	00201634592817	http://www.whatsapp.com	3	74170795	15.00	2026-04-22 02:12:50
+467	00201684759203	00201691827364	1	337	0.00	2026-04-22 02:02:22
+468	00201690485721	00201634592817	2	3	0.00	2026-04-22 02:26:17
+469	00201657483920	00201650394821	1	210	0.00	2026-04-22 02:48:35
+470	00201627384950	00201656273849	1	359	0.00	2026-04-22 01:59:31
+471	00201690485721	0020128169177	2	1	20.00	2026-04-22 01:57:29
+472	00201657483920	0020106148687	2	2	10.00	2026-04-22 02:53:31
+473	00201691827364	http://www.google.com	3	80616716	10.00	2026-04-22 01:56:45
+474	00201639485762	00201687162534	1	537	0.00	2026-04-22 02:23:05
+475	00201660495837	0020121720029	2	5	10.00	2026-04-22 02:48:49
+476	00201657483920	00201645372819	1	389	0.00	2026-04-22 02:27:27
+477	00201634592817	00201650394821	2	2	0.00	2026-04-22 02:18:58
+478	00201628374619	0020151064135	2	2	10.00	2026-04-22 02:36:19
+479	00201660495837	0020156249116	2	4	10.00	2026-04-22 02:34:17
+480	00201619283745	00201682736450	2	4	0.00	2026-04-22 01:59:02
+481	00201684759203	http://www.youtube.com	3	75180186	10.00	2026-04-22 02:35:21
+482	00201610293847	http://www.google.com	3	69462289	0.00	2026-04-22 02:52:13
+483	00201678192034	00201645372819	2	1	0.00	2026-04-22 02:45:21
+484	00201657483920	00201627384950	1	546	0.00	2026-04-22 02:00:37
+485	00201610293847	00201619283745	1	355	0.00	2026-04-22 02:29:13
+486	00201645372819	00201693847562	2	5	0.00	2026-04-22 01:59:05
+487	00201660495837	00201656273849	1	258	0.00	2026-04-22 02:31:29
+488	00201627384950	00201634592817	1	557	0.00	2026-04-22 02:08:32
+489	00201660495837	0020155383206	2	3	10.00	2026-04-22 02:32:27
+490	00201645372819	00201648592031	2	1	0.00	2026-04-22 02:40:13
+491	00201682736450	http://www.google.com	3	5036531	0.00	2026-04-22 02:21:45
+492	00201687162534	0020101681867	1	376	19.00	2026-04-22 02:41:13
+493	00201628374619	00201684759203	1	256	0.00	2026-04-22 02:05:30
+494	00201639485762	0020113258864	2	2	10.00	2026-04-22 02:55:01
+495	00201645372819	00201690485721	1	255	0.00	2026-04-22 02:16:39
+496	00201657483920	http://www.google.com	3	101124162	10.00	2026-04-22 02:05:57
+497	00201691827364	0020115113779	1	404	11.00	2026-04-22 02:04:24
+498	00201619283745	http://www.whatsapp.com	3	103164485	15.00	2026-04-22 02:28:35
+499	00201648592031	0020156833821	1	469	28.00	2026-04-22 02:49:30
+500	00201690485721	0020118383189	2	3	10.00	2026-04-22 02:21:49
+501	00201634592817	0020151876333	2	1	10.00	2026-04-23 22:33:13
+502	00201656273849	0020123738628	1	410	31.00	2026-04-23 23:26:41
+503	00201682736450	0020105269844	2	5	20.00	2026-04-23 22:29:47
+504	00201693847562	00201657483920	1	505	0.00	2026-04-23 23:04:25
+505	00201623948576	0020153926688	2	4	10.00	2026-04-23 23:25:10
+506	00201650394821	0020155374393	2	1	10.00	2026-04-23 23:01:11
+507	00201693847562	0020156331068	1	543	27.00	2026-04-23 22:34:06
+508	00201645372819	0020153654553	1	62	28.00	2026-04-23 22:33:26
+509	00201619283745	00201690485721	1	110	0.00	2026-04-23 22:59:03
+510	00201678192034	0020104441060	1	301	33.00	2026-04-23 23:23:46
+511	00201627384950	00201684759203	1	44	0.00	2026-04-23 23:19:56
+512	00201656273849	http://www.youtube.com	3	32452198	10.00	2026-04-23 22:48:30
+513	00201657483920	0020107251695	1	266	48.00	2026-04-23 23:14:10
+514	00201619283745	http://www.google.com	3	6546970	0.00	2026-04-23 22:48:12
+515	00201650394821	http://www.google.com	3	352267	10.00	2026-04-23 22:32:45
+516	00201693847562	00201623948576	1	389	0.00	2026-04-23 23:23:01
+517	00201657483920	0020106485525	1	18	26.00	2026-04-23 22:56:01
+518	00201690485721	http://www.facebook.com	3	59424058	15.00	2026-04-23 22:38:30
+519	00201660495837	0020114387680	2	4	20.00	2026-04-23 23:05:23
+520	00201691827364	0020104089312	2	1	10.00	2026-04-23 23:17:13
+521	00201610293847	http://www.facebook.com	3	92635064	0.00	2026-04-23 22:31:30
+522	00201657483920	00201645372819	2	2	0.00	2026-04-23 23:11:26
+523	00201619283745	0020108818829	2	1	10.00	2026-04-23 23:11:55
+524	00201687162534	http://www.whatsapp.com	3	71239453	15.00	2026-04-23 22:45:11
+525	00201623948576	http://www.youtube.com	3	4497291	10.00	2026-04-23 23:25:18
+526	00201691827364	http://www.google.com	3	93758828	0.00	2026-04-23 22:28:41
+527	00201678192034	00201684759203	2	3	0.00	2026-04-23 23:22:54
+528	00201656273849	0020121120616	1	254	46.00	2026-04-23 22:39:29
+529	00201690485721	0020159279709	1	369	34.00	2026-04-23 22:41:17
+530	00201678192034	0020153572783	2	1	10.00	2026-04-23 22:28:30
+531	00201650394821	0020105041075	1	207	37.00	2026-04-23 23:04:12
+532	00201645372819	00201684759203	1	525	0.00	2026-04-23 23:13:12
+533	00201610293847	00201619283745	1	255	0.00	2026-04-23 22:35:56
+534	00201682736450	http://www.google.com	3	60938712	15.00	2026-04-23 22:36:04
+535	00201619283745	00201657483920	1	186	0.00	2026-04-23 23:23:40
+536	00201660495837	http://www.whatsapp.com	3	36730995	10.00	2026-04-23 22:44:46
+537	00201684759203	00201690485721	2	3	0.00	2026-04-23 22:57:24
+538	00201693847562	0020119123878	2	5	20.00	2026-04-23 22:56:04
+539	00201623948576	00201619283745	2	3	0.00	2026-04-23 22:36:24
+540	00201639485762	00201687162534	1	280	0.00	2026-04-23 22:33:24
+541	00201634592817	00201657483920	2	1	0.00	2026-04-23 23:05:24
+542	00201678192034	0020129669391	1	364	45.00	2026-04-23 23:09:41
+543	00201691827364	0020114001518	2	1	20.00	2026-04-23 22:46:12
+544	00201690485721	0020104320828	2	3	10.00	2026-04-23 23:26:18
+545	00201691827364	0020122507417	1	260	13.00	2026-04-23 22:54:40
+546	00201693847562	0020118584516	1	262	24.00	2026-04-23 22:46:28
+547	00201682736450	http://www.google.com	3	63949354	15.00	2026-04-23 22:41:22
+548	00201693847562	00201634592817	1	360	0.00	2026-04-23 22:37:28
+549	00201690485721	00201678192034	2	5	0.00	2026-04-23 23:01:49
+550	00201684759203	0020112861170	2	4	20.00	2026-04-23 22:49:42
+551	00201656273849	00201693847562	2	4	0.00	2026-04-23 23:10:23
+552	00201693847562	00201610293847	2	5	0.00	2026-04-23 22:52:47
+553	00201645372819	00201650394821	1	337	0.00	2026-04-23 22:41:13
+554	00201627384950	http://www.facebook.com	3	35006213	0.00	2026-04-23 23:18:48
+555	00201610293847	0020106825881	1	350	31.00	2026-04-23 23:14:31
+556	00201682736450	00201691827364	2	3	0.00	2026-04-23 22:37:26
+557	00201687162534	http://www.google.com	3	51627110	15.00	2026-04-23 22:34:15
+558	00201684759203	00201627384950	1	369	0.00	2026-04-23 22:53:05
+559	00201628374619	http://www.google.com	3	37533848	0.00	2026-04-23 23:22:06
+560	00201657483920	0020129809047	1	314	22.00	2026-04-23 23:19:01
+561	00201684759203	0020156439436	1	162	50.00	2026-04-23 22:29:23
+562	00201657483920	0020126853517	2	3	20.00	2026-04-23 23:00:37
+563	00201682736450	00201656273849	2	4	0.00	2026-04-23 23:00:04
+564	00201619283745	http://www.whatsapp.com	3	1512674	0.00	2026-04-23 22:35:10
+565	00201610293847	http://www.youtube.com	3	81527368	15.00	2026-04-23 22:48:46
+566	00201619283745	http://www.facebook.com	3	81729200	10.00	2026-04-23 22:40:35
+567	00201610293847	00201657483920	2	2	0.00	2026-04-23 22:45:13
+568	00201639485762	00201691827364	1	237	0.00	2026-04-23 23:06:00
+569	00201627384950	00201687162534	2	3	0.00	2026-04-23 23:11:56
+570	00201639485762	http://www.facebook.com	3	16005547	10.00	2026-04-23 22:46:57
+571	00201684759203	0020113696693	1	407	26.00	2026-04-23 23:14:35
+572	00201684759203	0020118904564	1	176	24.00	2026-04-23 23:17:47
+573	00201690485721	0020111618522	1	88	15.00	2026-04-23 22:33:12
+574	00201693847562	0020107013761	2	2	10.00	2026-04-23 23:13:03
+575	00201678192034	http://www.facebook.com	3	12206095	15.00	2026-04-23 22:56:39
+576	00201627384950	0020117026622	1	290	37.00	2026-04-23 23:22:10
+577	00201682736450	0020109005299	2	5	10.00	2026-04-23 23:11:26
+578	00201648592031	0020102553618	2	4	10.00	2026-04-23 22:53:02
+579	00201610293847	http://www.google.com	3	65052299	10.00	2026-04-23 23:20:46
+580	00201623948576	0020103113355	2	2	10.00	2026-04-23 23:00:52
+581	00201690485721	00201693847562	2	2	0.00	2026-04-23 22:50:28
+582	00201639485762	0020118485276	2	1	10.00	2026-04-23 22:55:56
+583	00201634592817	0020119163974	1	354	19.00	2026-04-23 22:28:27
+584	00201657483920	http://www.facebook.com	3	53885171	10.00	2026-04-23 22:47:44
+585	00201682736450	http://www.google.com	3	34843008	10.00	2026-04-23 23:01:21
+586	00201619283745	00201628374619	2	1	0.00	2026-04-23 22:31:44
+587	00201610293847	http://www.google.com	3	10053257	15.00	2026-04-23 22:51:58
+588	00201628374619	http://www.whatsapp.com	3	78618851	10.00	2026-04-23 23:16:20
+589	00201682736450	http://www.whatsapp.com	3	104482563	10.00	2026-04-23 23:03:37
+590	00201619283745	0020112669320	2	1	10.00	2026-04-23 23:20:08
+591	00201678192034	http://www.whatsapp.com	3	67991916	10.00	2026-04-23 22:33:38
+592	00201619283745	00201627384950	2	1	0.00	2026-04-23 22:38:41
+593	00201684759203	0020117770155	1	520	43.00	2026-04-23 22:36:26
+594	00201610293847	00201628374619	2	1	0.00	2026-04-23 22:35:42
+595	00201656273849	http://www.google.com	3	67665649	0.00	2026-04-23 23:21:22
+596	00201657483920	http://www.youtube.com	3	103201603	10.00	2026-04-23 22:34:54
+597	00201691827364	http://www.google.com	3	103247765	0.00	2026-04-23 22:29:06
+598	00201619283745	http://www.google.com	3	36886644	0.00	2026-04-23 23:00:47
+599	00201693847562	0020115441446	2	4	20.00	2026-04-23 22:32:12
+600	00201682736450	http://www.facebook.com	3	66740058	15.00	2026-04-23 22:55:51
+601	00201645372819	http://www.google.com	3	101433188	10.00	2026-04-23 19:42:35
+602	00201619283745	0020114241636	2	4	10.00	2026-04-23 20:26:44
+603	00201678192034	http://www.google.com	3	67761445	15.00	2026-04-23 19:54:04
+604	00201650394821	http://www.google.com	3	91465649	10.00	2026-04-23 19:53:24
+605	00201627384950	http://www.google.com	3	23014518	0.00	2026-04-23 19:34:29
+606	00201678192034	00201623948576	2	5	0.00	2026-04-23 19:58:21
+607	00201628374619	00201693847562	2	5	0.00	2026-04-23 19:45:28
+608	00201650394821	0020152462334	1	506	35.00	2026-04-23 20:05:13
+609	00201660495837	http://www.whatsapp.com	3	87398373	15.00	2026-04-23 20:23:07
+610	00201634592817	http://www.youtube.com	3	54107156	15.00	2026-04-23 19:45:16
+611	00201660495837	00201648592031	2	3	0.00	2026-04-23 19:31:07
+612	00201610293847	0020122955889	2	4	10.00	2026-04-23 19:49:43
+613	00201691827364	0020158175367	2	5	20.00	2026-04-23 20:15:06
+614	00201610293847	0020107709443	1	403	37.00	2026-04-23 19:48:54
+615	00201678192034	http://www.google.com	3	51982607	10.00	2026-04-23 19:57:58
+616	00201690485721	0020125386218	2	2	20.00	2026-04-23 19:53:10
+617	00201627384950	00201648592031	1	162	0.00	2026-04-23 20:01:11
+618	00201623948576	00201656273849	2	2	0.00	2026-04-23 19:52:33
+619	00201687162534	00201639485762	2	4	0.00	2026-04-23 20:22:30
+620	00201693847562	http://www.youtube.com	3	25185037	10.00	2026-04-23 20:02:02
+621	00201645372819	0020157422204	1	372	49.00	2026-04-23 19:51:29
+622	00201650394821	0020117346724	1	367	33.00	2026-04-23 19:40:26
+623	00201628374619	http://www.whatsapp.com	3	81941584	10.00	2026-04-23 20:17:31
+624	00201634592817	http://www.google.com	3	104613460	10.00	2026-04-23 20:18:35
+625	00201660495837	00201645372819	2	5	0.00	2026-04-23 20:06:43
+626	00201610293847	00201657483920	1	122	0.00	2026-04-23 20:07:15
+627	00201660495837	http://www.google.com	3	88228627	0.00	2026-04-23 19:57:59
+628	00201660495837	00201648592031	2	1	0.00	2026-04-23 19:50:27
+629	00201656273849	0020106169229	2	2	20.00	2026-04-23 19:37:07
+630	00201656273849	00201684759203	1	491	0.00	2026-04-23 19:53:13
+631	00201645372819	http://www.facebook.com	3	28502269	10.00	2026-04-23 19:47:45
+632	00201639485762	00201682736450	1	388	0.00	2026-04-23 19:54:48
+633	00201656273849	0020115706070	2	5	20.00	2026-04-23 20:04:40
+634	00201619283745	0020121421386	2	3	20.00	2026-04-23 19:33:04
+635	00201687162534	http://www.youtube.com	3	72936637	15.00	2026-04-23 20:27:44
+636	00201656273849	http://www.facebook.com	3	98025643	10.00	2026-04-23 20:16:24
+637	00201648592031	http://www.youtube.com	3	98979406	15.00	2026-04-23 20:04:48
+638	00201639485762	00201682736450	1	195	0.00	2026-04-23 19:58:42
+639	00201645372819	0020122093348	1	211	23.00	2026-04-23 20:08:23
+640	00201648592031	http://www.youtube.com	3	81573772	10.00	2026-04-23 20:22:42
+641	00201656273849	00201657483920	2	4	0.00	2026-04-23 19:58:13
+642	00201628374619	0020118018983	2	2	20.00	2026-04-23 19:56:16
+643	00201691827364	http://www.google.com	3	17086440	15.00	2026-04-23 19:49:38
+644	00201623948576	00201619283745	2	5	0.00	2026-04-23 19:42:42
+645	00201693847562	0020153235723	2	3	20.00	2026-04-23 19:46:34
+646	00201678192034	00201660495837	2	2	0.00	2026-04-23 20:23:45
+647	00201693847562	http://www.whatsapp.com	3	25419341	15.00	2026-04-23 19:45:11
+648	00201639485762	00201648592031	2	5	0.00	2026-04-23 20:19:53
+649	00201690485721	0020122850881	1	451	35.00	2026-04-23 20:25:34
+650	00201650394821	http://www.facebook.com	3	18670609	10.00	2026-04-23 19:30:24
+651	00201648592031	http://www.whatsapp.com	3	33882165	15.00	2026-04-23 19:50:53
+652	00201687162534	0020109260329	2	2	20.00	2026-04-23 20:21:06
+653	00201650394821	http://www.google.com	3	59889642	0.00	2026-04-23 19:58:51
+654	00201650394821	00201690485721	2	3	0.00	2026-04-23 19:53:56
+655	00201690485721	00201650394821	1	409	0.00	2026-04-23 19:57:03
+656	00201627384950	0020109174414	1	324	33.00	2026-04-23 20:28:13
+657	00201657483920	00201634592817	2	4	0.00	2026-04-23 20:02:38
+658	00201628374619	http://www.google.com	3	100814139	0.00	2026-04-23 20:22:53
+659	00201627384950	0020126517722	2	1	20.00	2026-04-23 20:08:49
+660	00201627384950	0020127575686	2	4	20.00	2026-04-23 19:51:37
+661	00201627384950	00201634592817	2	5	0.00	2026-04-23 20:18:54
+662	00201656273849	http://www.youtube.com	3	103365694	10.00	2026-04-23 19:46:20
+663	00201657483920	0020112189586	2	2	20.00	2026-04-23 19:39:05
+664	00201648592031	http://www.youtube.com	3	75601579	0.00	2026-04-23 20:17:25
+665	00201623948576	http://www.facebook.com	3	57784804	15.00	2026-04-23 19:55:02
+666	00201634592817	00201690485721	2	5	0.00	2026-04-23 19:50:27
+667	00201628374619	http://www.google.com	3	55013235	0.00	2026-04-23 20:06:28
+668	00201660495837	00201634592817	2	4	0.00	2026-04-23 20:14:22
+669	00201682736450	0020104492469	1	311	12.00	2026-04-23 19:35:20
+670	00201610293847	0020118419265	2	3	10.00	2026-04-23 19:52:37
+671	00201639485762	00201678192034	1	432	0.00	2026-04-23 20:20:44
+672	00201639485762	0020152018563	1	101	47.00	2026-04-23 20:05:17
+673	00201682736450	0020152797228	2	4	20.00	2026-04-23 19:32:59
+674	00201639485762	00201657483920	1	403	0.00	2026-04-23 20:23:43
+675	00201691827364	00201639485762	1	500	0.00	2026-04-23 20:04:43
+676	00201627384950	00201657483920	2	1	0.00	2026-04-23 20:07:04
+677	00201645372819	http://www.google.com	3	82678670	10.00	2026-04-23 19:40:15
+678	00201684759203	0020159637322	2	1	20.00	2026-04-23 19:45:28
+679	00201657483920	00201684759203	2	3	0.00	2026-04-23 20:16:42
+680	00201687162534	http://www.whatsapp.com	3	4545037	15.00	2026-04-23 19:54:51
+681	00201627384950	00201650394821	1	154	0.00	2026-04-23 19:51:58
+682	00201660495837	00201628374619	1	279	0.00	2026-04-23 19:31:26
+683	00201619283745	0020103404002	2	2	20.00	2026-04-23 19:48:49
+684	00201678192034	00201619283745	2	1	0.00	2026-04-23 19:34:35
+685	00201657483920	0020123719542	2	3	20.00	2026-04-23 20:13:43
+686	00201623948576	http://www.facebook.com	3	76100323	15.00	2026-04-23 20:09:38
+687	00201690485721	http://www.whatsapp.com	3	62218064	10.00	2026-04-23 19:29:18
+688	00201660495837	00201693847562	1	119	0.00	2026-04-23 20:22:27
+689	00201634592817	0020111225030	1	188	20.00	2026-04-23 20:18:40
+690	00201645372819	00201656273849	1	194	0.00	2026-04-23 20:10:53
+691	00201687162534	http://www.youtube.com	3	17841480	0.00	2026-04-23 19:35:09
+692	00201690485721	0020111910380	2	5	10.00	2026-04-23 20:14:05
+693	00201627384950	http://www.youtube.com	3	17037707	10.00	2026-04-23 20:02:53
+694	00201645372819	http://www.whatsapp.com	3	63263447	15.00	2026-04-23 20:21:33
+695	00201691827364	http://www.google.com	3	39530556	0.00	2026-04-23 20:00:12
+696	00201657483920	0020122679939	1	455	40.00	2026-04-23 20:15:52
+697	00201660495837	0020122883576	2	1	20.00	2026-04-23 20:19:13
+698	00201645372819	00201627384950	1	133	0.00	2026-04-23 19:32:47
+699	00201634592817	http://www.facebook.com	3	9781033	0.00	2026-04-23 20:09:39
+700	00201619283745	0020152447012	2	1	20.00	2026-04-23 20:10:59
+701	00201634592817	0020154530263	2	1	10.00	2026-04-23 19:27:54
+702	00201678192034	0020159213595	1	84	12.00	2026-04-23 18:54:45
+703	00201690485721	00201656273849	2	3	0.00	2026-04-23 19:05:23
+704	00201634592817	00201610293847	1	327	0.00	2026-04-23 19:28:05
+705	00201648592031	http://www.google.com	3	99721296	15.00	2026-04-23 18:34:27
+706	00201693847562	00201623948576	2	2	0.00	2026-04-23 18:30:21
+707	00201650394821	00201684759203	2	5	0.00	2026-04-23 18:57:22
+708	00201693847562	0020122360966	1	277	38.00	2026-04-23 19:23:56
+709	00201628374619	http://www.whatsapp.com	3	11707554	0.00	2026-04-23 19:20:17
+710	00201656273849	00201678192034	2	4	0.00	2026-04-23 18:41:27
+711	00201628374619	00201645372819	2	1	0.00	2026-04-23 18:33:45
+712	00201657483920	00201691827364	1	300	0.00	2026-04-23 18:57:03
+713	00201656273849	00201623948576	2	3	0.00	2026-04-23 18:37:38
+714	00201650394821	0020116720135	1	487	23.00	2026-04-23 18:37:02
+715	00201623948576	00201619283745	1	534	0.00	2026-04-23 18:49:24
+716	00201678192034	0020112994684	1	214	42.00	2026-04-23 19:27:28
+717	00201656273849	00201634592817	1	106	0.00	2026-04-23 19:01:30
+718	00201693847562	00201684759203	1	394	0.00	2026-04-23 18:38:23
+719	00201650394821	00201639485762	1	45	0.00	2026-04-23 19:00:31
+720	00201610293847	0020106583125	2	1	20.00	2026-04-23 19:02:37
+721	00201648592031	0020106578960	1	441	19.00	2026-04-23 18:34:05
+722	00201693847562	http://www.youtube.com	3	95957916	0.00	2026-04-23 19:16:41
+723	00201634592817	0020153155425	2	2	20.00	2026-04-23 18:33:57
+724	00201657483920	00201619283745	2	1	0.00	2026-04-23 19:22:21
+725	00201619283745	http://www.google.com	3	1421531	15.00	2026-04-23 19:24:03
+726	00201657483920	http://www.facebook.com	3	10785785	0.00	2026-04-23 18:50:49
+727	00201691827364	0020151833272	1	369	30.00	2026-04-23 18:35:00
+728	00201660495837	0020111089953	2	4	20.00	2026-04-23 18:50:10
+729	00201684759203	00201645372819	2	5	0.00	2026-04-23 18:51:04
+730	00201682736450	00201690485721	2	5	0.00	2026-04-23 19:06:41
+731	00201650394821	0020104145782	2	3	20.00	2026-04-23 18:46:06
+732	00201678192034	0020153676543	2	5	10.00	2026-04-23 18:56:50
+733	00201678192034	00201627384950	2	3	0.00	2026-04-23 18:36:38
+734	00201623948576	00201650394821	1	450	0.00	2026-04-23 19:07:26
+735	00201627384950	00201650394821	2	5	0.00	2026-04-23 19:20:14
+736	00201628374619	0020126526645	2	3	10.00	2026-04-23 19:09:09
+737	00201656273849	http://www.youtube.com	3	24384399	10.00	2026-04-23 19:00:34
+738	00201687162534	00201690485721	1	198	0.00	2026-04-23 18:50:40
+739	00201634592817	http://www.whatsapp.com	3	37020722	0.00	2026-04-23 19:21:29
+740	00201691827364	0020126230204	2	1	10.00	2026-04-23 19:19:57
+741	00201610293847	0020119551618	1	432	11.00	2026-04-23 18:41:17
+742	00201634592817	0020104618722	1	331	19.00	2026-04-23 18:52:34
+743	00201634592817	00201656273849	2	3	0.00	2026-04-23 19:24:19
+744	00201634592817	0020151163281	2	4	20.00	2026-04-23 19:27:30
+745	00201648592031	00201687162534	2	2	0.00	2026-04-23 18:35:09
+746	00201690485721	0020125375815	1	280	38.00	2026-04-23 19:07:12
+747	00201691827364	0020109907225	2	1	20.00	2026-04-23 18:30:08
+748	00201660495837	00201645372819	1	313	0.00	2026-04-23 18:31:35
+749	00201619283745	00201690485721	1	512	0.00	2026-04-23 18:33:49
+750	00201627384950	http://www.google.com	3	25538963	15.00	2026-04-23 18:32:42
+751	00201639485762	0020107530962	2	2	20.00	2026-04-23 18:39:43
+752	00201634592817	0020121940220	2	5	20.00	2026-04-23 19:10:53
+753	00201610293847	0020119303909	1	341	17.00	2026-04-23 18:40:02
+754	00201693847562	0020156384181	2	1	20.00	2026-04-23 18:42:14
+755	00201650394821	0020108208447	2	5	20.00	2026-04-23 18:29:44
+756	00201648592031	0020153147632	2	5	20.00	2026-04-23 18:57:38
+757	00201656273849	00201684759203	2	3	0.00	2026-04-23 19:07:48
+758	00201690485721	00201628374619	2	1	0.00	2026-04-23 18:41:53
+759	00201691827364	00201690485721	1	512	0.00	2026-04-23 18:58:03
+760	00201690485721	00201650394821	1	473	0.00	2026-04-23 18:38:03
+761	00201634592817	0020129975257	2	2	10.00	2026-04-23 19:10:44
+762	00201648592031	http://www.youtube.com	3	87591209	10.00	2026-04-23 18:53:43
+763	00201693847562	0020117760059	2	3	20.00	2026-04-23 19:03:20
+764	00201645372819	http://www.google.com	3	31654787	0.00	2026-04-23 18:33:11
+765	00201645372819	00201623948576	2	2	0.00	2026-04-23 19:05:42
+766	00201660495837	0020153415804	1	120	43.00	2026-04-23 19:15:36
+767	00201628374619	00201678192034	1	209	0.00	2026-04-23 19:08:31
+768	00201678192034	00201684759203	1	330	0.00	2026-04-23 19:25:02
+769	00201627384950	0020124694082	2	5	20.00	2026-04-23 18:38:37
+770	00201634592817	00201691827364	2	4	0.00	2026-04-23 19:09:09
+771	00201627384950	00201639485762	1	566	0.00	2026-04-23 18:37:02
+772	00201648592031	00201690485721	2	1	0.00	2026-04-23 18:32:58
+773	00201619283745	http://www.youtube.com	3	62814050	15.00	2026-04-23 18:33:14
+774	00201627384950	http://www.whatsapp.com	3	75433653	0.00	2026-04-23 18:29:28
+775	00201634592817	0020154473406	2	3	10.00	2026-04-23 18:35:39
+776	00201627384950	00201678192034	1	578	0.00	2026-04-23 19:22:42
+777	00201660495837	00201690485721	1	299	0.00	2026-04-23 18:58:33
+778	00201691827364	0020119847369	2	5	20.00	2026-04-23 18:34:08
+779	00201693847562	00201628374619	2	5	0.00	2026-04-23 18:43:34
+780	00201628374619	0020152903037	2	3	20.00	2026-04-23 18:46:03
+781	00201639485762	0020101879653	1	75	44.00	2026-04-23 18:37:58
+782	00201656273849	0020129876408	2	3	10.00	2026-04-23 18:54:54
+783	00201690485721	00201678192034	2	3	0.00	2026-04-23 18:47:20
+784	00201619283745	00201610293847	2	3	0.00	2026-04-23 19:24:09
+785	00201682736450	0020124689427	2	4	10.00	2026-04-23 19:15:56
+786	00201627384950	00201660495837	2	2	0.00	2026-04-23 18:43:53
+787	00201627384950	0020156231109	1	330	25.00	2026-04-23 19:22:36
+788	00201657483920	http://www.google.com	3	20154061	15.00	2026-04-23 18:45:50
+789	00201657483920	0020157180534	2	5	10.00	2026-04-23 18:57:35
+790	00201634592817	0020153955564	1	135	42.00	2026-04-23 19:05:04
+791	00201690485721	0020153063987	1	587	49.00	2026-04-23 19:26:45
+792	00201691827364	00201693847562	2	1	0.00	2026-04-23 18:50:51
+793	00201660495837	0020107963140	2	1	20.00	2026-04-23 18:41:28
+794	00201619283745	00201687162534	1	510	0.00	2026-04-23 19:15:09
+795	00201628374619	0020115809820	2	1	10.00	2026-04-23 19:10:46
+796	00201660495837	0020158670139	2	4	20.00	2026-04-23 18:41:36
+797	00201623948576	http://www.whatsapp.com	3	34861426	10.00	2026-04-23 19:00:36
+798	00201682736450	http://www.facebook.com	3	3987724	10.00	2026-04-23 19:24:42
+799	00201619283745	00201660495837	1	390	0.00	2026-04-23 18:52:27
+800	00201619283745	http://www.google.com	3	56355951	10.00	2026-04-23 18:41:19
+801	00201623948576	0020155146268	1	495	14.00	2026-04-23 21:19:35
+802	00201648592031	00201693847562	2	3	0.00	2026-04-23 20:46:05
+803	00201619283745	00201610293847	2	1	0.00	2026-04-23 21:07:37
+804	00201639485762	0020103245119	1	467	13.00	2026-04-23 20:47:43
+805	00201634592817	http://www.whatsapp.com	3	28328880	10.00	2026-04-23 21:15:50
+806	00201684759203	http://www.facebook.com	3	30003650	0.00	2026-04-23 20:30:46
+807	00201645372819	00201682736450	1	173	0.00	2026-04-23 20:53:17
+808	00201634592817	00201648592031	1	557	0.00	2026-04-23 21:06:31
+809	00201628374619	http://www.facebook.com	3	11652767	15.00	2026-04-23 21:02:13
+810	00201657483920	0020125496537	2	3	20.00	2026-04-23 20:46:33
+811	00201660495837	00201648592031	2	1	0.00	2026-04-23 21:25:17
+812	00201693847562	00201678192034	2	3	0.00	2026-04-23 20:56:35
+813	00201678192034	00201682736450	2	1	0.00	2026-04-23 21:22:45
+814	00201682736450	0020159153068	2	3	20.00	2026-04-23 20:40:53
+815	00201650394821	0020104220317	2	2	10.00	2026-04-23 21:11:07
+816	00201684759203	0020152591209	1	123	35.00	2026-04-23 20:37:34
+817	00201691827364	00201657483920	1	523	0.00	2026-04-23 21:13:35
+818	00201684759203	00201693847562	1	231	0.00	2026-04-23 21:05:59
+819	00201657483920	00201650394821	2	2	0.00	2026-04-23 20:32:00
+820	00201627384950	0020159620637	2	5	10.00	2026-04-23 21:11:41
+821	00201690485721	0020117674787	1	312	41.00	2026-04-23 21:15:31
+822	00201687162534	0020104019994	1	431	41.00	2026-04-23 20:46:35
+823	00201623948576	http://www.whatsapp.com	3	42314255	0.00	2026-04-23 20:49:30
+824	00201628374619	0020126139929	1	523	40.00	2026-04-23 20:33:24
+825	00201687162534	0020111354977	2	5	10.00	2026-04-23 21:25:45
+826	00201682736450	http://www.whatsapp.com	3	44672786	0.00	2026-04-23 21:05:54
+827	00201623948576	http://www.google.com	3	15380605	15.00	2026-04-23 20:42:43
+828	00201684759203	0020129281877	1	353	32.00	2026-04-23 21:09:31
+829	00201645372819	00201690485721	2	5	0.00	2026-04-23 20:30:49
+830	00201623948576	0020151067278	1	362	26.00	2026-04-23 21:24:55
+831	00201690485721	00201682736450	2	2	0.00	2026-04-23 20:28:30
+832	00201657483920	00201656273849	2	4	0.00	2026-04-23 20:54:19
+833	00201623948576	http://www.google.com	3	83812654	15.00	2026-04-23 20:57:04
+834	00201639485762	0020101212312	1	506	38.00	2026-04-23 20:30:21
+835	00201623948576	0020102678696	1	78	34.00	2026-04-23 21:07:50
+836	00201691827364	http://www.youtube.com	3	82591426	0.00	2026-04-23 21:06:46
+837	00201693847562	00201639485762	1	123	0.00	2026-04-23 20:36:03
+838	00201678192034	0020121302013	1	14	28.00	2026-04-23 21:18:38
+839	00201687162534	0020107441621	1	387	29.00	2026-04-23 20:55:55
+840	00201639485762	00201684759203	2	2	0.00	2026-04-23 21:10:46
+841	00201634592817	00201656273849	1	558	0.00	2026-04-23 21:06:21
+842	00201650394821	0020152195694	2	1	10.00	2026-04-23 21:23:46
+843	00201678192034	http://www.youtube.com	3	86286969	0.00	2026-04-23 20:37:18
+844	00201657483920	0020124076627	2	3	20.00	2026-04-23 21:03:12
+845	00201678192034	00201691827364	2	2	0.00	2026-04-23 20:59:05
+846	00201678192034	0020126283716	2	5	20.00	2026-04-23 20:33:41
+847	00201682736450	http://www.whatsapp.com	3	73763400	15.00	2026-04-23 20:44:44
+848	00201687162534	http://www.whatsapp.com	3	36704625	0.00	2026-04-23 21:18:39
+849	00201693847562	http://www.facebook.com	3	161234	15.00	2026-04-23 20:52:12
+850	00201678192034	00201657483920	2	2	0.00	2026-04-23 20:29:58
+851	00201691827364	http://www.google.com	3	86087931	15.00	2026-04-23 20:55:26
+852	00201678192034	http://www.google.com	3	637415	15.00	2026-04-23 20:40:31
+853	00201639485762	00201660495837	1	159	0.00	2026-04-23 20:28:50
+854	00201687162534	00201660495837	1	174	0.00	2026-04-23 21:03:53
+855	00201690485721	00201627384950	1	472	0.00	2026-04-23 21:04:01
+856	00201657483920	http://www.facebook.com	3	73664477	10.00	2026-04-23 20:46:17
+857	00201627384950	http://www.facebook.com	3	94238451	0.00	2026-04-23 21:05:53
+858	00201648592031	00201678192034	2	4	0.00	2026-04-23 21:23:53
+859	00201619283745	http://www.facebook.com	3	41936714	0.00	2026-04-23 20:39:19
+860	00201684759203	00201693847562	1	537	0.00	2026-04-23 21:10:17
+861	00201619283745	http://www.google.com	3	30928072	10.00	2026-04-23 21:10:25
+862	00201657483920	http://www.facebook.com	3	104482640	10.00	2026-04-23 20:52:08
+863	00201648592031	http://www.youtube.com	3	89463269	10.00	2026-04-23 20:53:07
+864	00201627384950	0020119816057	1	31	16.00	2026-04-23 20:46:13
+865	00201684759203	00201687162534	2	3	0.00	2026-04-23 21:27:38
+866	00201627384950	00201623948576	1	254	0.00	2026-04-23 20:42:22
+867	00201656273849	0020111954526	1	571	21.00	2026-04-23 20:56:04
+868	00201623948576	00201682736450	1	541	0.00	2026-04-23 21:14:40
+869	00201627384950	http://www.facebook.com	3	50002763	0.00	2026-04-23 20:38:31
+870	00201656273849	http://www.facebook.com	3	71405720	15.00	2026-04-23 20:43:00
+871	00201645372819	0020129206282	1	57	47.00	2026-04-23 21:02:05
+872	00201619283745	00201690485721	2	2	0.00	2026-04-23 20:33:04
+873	00201645372819	0020111661110	2	3	20.00	2026-04-23 21:01:05
+874	00201657483920	http://www.google.com	3	80962017	10.00	2026-04-23 21:02:24
+875	00201619283745	http://www.youtube.com	3	9174391	10.00	2026-04-23 21:24:26
+876	00201627384950	http://www.facebook.com	3	22324502	10.00	2026-04-23 20:55:07
+877	00201650394821	http://www.whatsapp.com	3	46006162	0.00	2026-04-23 21:03:55
+878	00201657483920	0020154070377	2	5	10.00	2026-04-23 21:02:52
+879	00201687162534	0020118974033	2	2	10.00	2026-04-23 20:35:48
+880	00201610293847	0020121011419	2	2	10.00	2026-04-23 20:55:48
+881	00201691827364	00201648592031	1	240	0.00	2026-04-23 20:46:56
+882	00201623948576	http://www.google.com	3	68440019	0.00	2026-04-23 20:51:24
+883	00201693847562	0020154708264	1	595	29.00	2026-04-23 21:13:10
+884	00201691827364	00201623948576	1	273	0.00	2026-04-23 21:15:30
+885	00201682736450	0020123348587	2	3	10.00	2026-04-23 20:42:25
+886	00201660495837	http://www.facebook.com	3	29997075	15.00	2026-04-23 20:36:33
+887	00201678192034	0020129539335	1	311	12.00	2026-04-23 20:31:23
+888	00201648592031	http://www.whatsapp.com	3	29882718	10.00	2026-04-23 20:52:50
+889	00201687162534	0020159596616	1	156	43.00	2026-04-23 20:56:41
+890	00201627384950	0020102679232	1	269	28.00	2026-04-23 20:29:53
+891	00201628374619	http://www.facebook.com	3	91449335	0.00	2026-04-23 21:23:00
+892	00201682736450	http://www.whatsapp.com	3	79332599	10.00	2026-04-23 20:53:31
+893	00201623948576	http://www.youtube.com	3	35438086	0.00	2026-04-23 21:21:39
+894	00201628374619	0020103687211	2	1	10.00	2026-04-23 20:48:04
+895	00201690485721	00201627384950	2	4	0.00	2026-04-23 20:57:33
+896	00201660495837	00201623948576	1	563	0.00	2026-04-23 20:37:20
+897	00201648592031	00201619283745	1	70	0.00	2026-04-23 20:36:24
+898	00201619283745	00201684759203	2	3	0.00	2026-04-23 20:30:35
+899	00201687162534	00201623948576	1	550	0.00	2026-04-23 20:53:48
+900	00201657483920	0020109821912	1	382	38.00	2026-04-23 20:57:39
+901	00201693847562	0020129872555	2	5	20.00	2026-04-23 22:27:03
+902	00201684759203	http://www.youtube.com	3	17846097	0.00	2026-04-23 21:55:35
+903	00201634592817	00201690485721	1	144	0.00	2026-04-23 21:54:40
+904	00201627384950	00201639485762	1	71	0.00	2026-04-23 22:16:29
+905	00201628374619	00201682736450	1	365	0.00	2026-04-23 21:37:18
+906	00201634592817	0020128787587	1	126	37.00	2026-04-23 22:20:25
+907	00201682736450	00201660495837	2	2	0.00	2026-04-23 22:00:11
+908	00201628374619	00201690485721	2	5	0.00	2026-04-23 21:42:17
+909	00201619283745	http://www.youtube.com	3	21951936	10.00	2026-04-23 21:37:47
+910	00201687162534	http://www.google.com	3	83842530	15.00	2026-04-23 22:05:16
+911	00201678192034	0020101790843	1	302	20.00	2026-04-23 22:22:52
+912	00201660495837	0020126985701	2	5	10.00	2026-04-23 21:45:04
+913	00201682736450	http://www.google.com	3	23596113	15.00	2026-04-23 21:49:10
+914	00201682736450	http://www.facebook.com	3	98729588	10.00	2026-04-23 21:47:28
+915	00201657483920	0020121683364	1	303	10.00	2026-04-23 21:55:38
+916	00201610293847	http://www.google.com	3	34947823	15.00	2026-04-23 21:54:21
+917	00201645372819	0020109783178	1	95	45.00	2026-04-23 21:33:32
+918	00201687162534	00201645372819	1	513	0.00	2026-04-23 21:44:52
+919	00201650394821	00201687162534	1	102	0.00	2026-04-23 21:55:00
+920	00201645372819	http://www.facebook.com	3	89299961	15.00	2026-04-23 21:35:02
+921	00201691827364	00201678192034	2	1	0.00	2026-04-23 21:54:43
+922	00201645372819	00201684759203	2	4	0.00	2026-04-23 21:53:25
+923	00201645372819	http://www.google.com	3	104558539	0.00	2026-04-23 21:58:05
+924	00201693847562	http://www.whatsapp.com	3	440120	10.00	2026-04-23 21:41:40
+925	00201691827364	00201656273849	1	512	0.00	2026-04-23 22:26:19
+926	00201610293847	0020121018977	1	173	14.00	2026-04-23 22:23:01
+927	00201610293847	00201660495837	1	35	0.00	2026-04-23 22:16:10
+928	00201687162534	00201684759203	1	526	0.00	2026-04-23 21:48:31
+929	00201634592817	0020151623604	2	4	10.00	2026-04-23 22:20:29
+930	00201648592031	http://www.facebook.com	3	20314437	0.00	2026-04-23 22:25:52
+931	00201678192034	http://www.google.com	3	67387296	0.00	2026-04-23 22:18:15
+932	00201682736450	00201684759203	1	431	0.00	2026-04-23 21:39:13
+933	00201687162534	http://www.google.com	3	1131586	10.00	2026-04-23 21:46:35
+934	00201691827364	0020125217897	2	2	10.00	2026-04-23 22:23:06
+935	00201619283745	00201690485721	1	81	0.00	2026-04-23 21:34:21
+936	00201656273849	0020158620887	1	569	27.00	2026-04-23 21:45:37
+937	00201619283745	http://www.whatsapp.com	3	61782888	15.00	2026-04-23 22:24:26
+938	00201682736450	00201623948576	1	541	0.00	2026-04-23 21:31:43
+939	00201623948576	0020128923970	1	220	20.00	2026-04-23 22:20:11
+940	00201691827364	http://www.facebook.com	3	46103246	0.00	2026-04-23 21:34:19
+941	00201687162534	00201657483920	2	5	0.00	2026-04-23 22:13:20
+942	00201656273849	00201645372819	1	85	0.00	2026-04-23 21:38:15
+943	00201690485721	http://www.youtube.com	3	22859836	0.00	2026-04-23 22:14:39
+944	00201610293847	http://www.whatsapp.com	3	40150685	15.00	2026-04-23 22:02:57
+945	00201693847562	http://www.google.com	3	24834969	10.00	2026-04-23 21:51:46
+946	00201639485762	00201678192034	2	5	0.00	2026-04-23 22:09:20
+947	00201628374619	0020158594345	1	507	44.00	2026-04-23 21:51:33
+948	00201684759203	http://www.google.com	3	50595009	15.00	2026-04-23 21:37:42
+949	00201693847562	0020153503660	1	118	27.00	2026-04-23 22:07:30
+950	00201678192034	http://www.google.com	3	3064602	15.00	2026-04-23 22:14:38
+951	00201634592817	00201693847562	1	389	0.00	2026-04-23 22:04:08
+952	00201657483920	0020105324492	2	1	10.00	2026-04-23 22:10:39
+953	00201684759203	0020111075256	1	491	11.00	2026-04-23 22:04:15
+954	00201684759203	00201634592817	2	5	0.00	2026-04-23 22:22:11
+955	00201657483920	0020151005145	1	38	32.00	2026-04-23 21:59:48
+956	00201619283745	0020129819582	1	242	32.00	2026-04-23 22:16:22
+957	00201678192034	http://www.facebook.com	3	100899821	15.00	2026-04-23 21:40:28
+958	00201690485721	0020103540079	2	1	10.00	2026-04-23 21:39:50
+959	00201645372819	00201628374619	2	1	0.00	2026-04-23 22:14:41
+960	00201639485762	00201623948576	1	293	0.00	2026-04-23 21:49:37
+961	00201610293847	00201693847562	1	33	0.00	2026-04-23 21:43:43
+962	00201627384950	0020109100851	2	1	10.00	2026-04-23 22:17:27
+963	00201627384950	0020115579217	2	1	20.00	2026-04-23 21:31:03
+964	00201650394821	http://www.youtube.com	3	10122857	15.00	2026-04-23 22:12:40
+965	00201693847562	http://www.google.com	3	13197708	10.00	2026-04-23 21:49:07
+966	00201678192034	http://www.google.com	3	34586998	15.00	2026-04-23 22:18:07
+967	00201634592817	00201623948576	1	157	0.00	2026-04-23 22:21:57
+968	00201628374619	0020124933446	2	5	10.00	2026-04-23 21:34:41
+969	00201623948576	0020124833432	1	282	15.00	2026-04-23 21:56:43
+970	00201687162534	http://www.google.com	3	5712238	0.00	2026-04-23 22:24:33
+971	00201684759203	http://www.facebook.com	3	91466287	10.00	2026-04-23 22:06:24
+972	00201678192034	http://www.whatsapp.com	3	975115	15.00	2026-04-23 22:06:54
+973	00201627384950	0020157570532	2	1	20.00	2026-04-23 21:52:06
+974	00201693847562	http://www.whatsapp.com	3	11537335	10.00	2026-04-23 21:30:13
+975	00201634592817	00201639485762	2	3	0.00	2026-04-23 21:57:36
+976	00201687162534	http://www.whatsapp.com	3	71778079	10.00	2026-04-23 21:49:48
+977	00201628374619	http://www.facebook.com	3	97561486	0.00	2026-04-23 21:49:07
+978	00201687162534	http://www.whatsapp.com	3	1387023	0.00	2026-04-23 21:46:23
+979	00201634592817	00201627384950	2	4	0.00	2026-04-23 21:53:19
+980	00201682736450	0020119196253	2	1	20.00	2026-04-23 22:16:05
+981	00201687162534	00201623948576	1	491	0.00	2026-04-23 21:58:38
+982	00201691827364	0020125447779	1	104	42.00	2026-04-23 22:14:21
+983	00201690485721	0020153461224	2	2	20.00	2026-04-23 22:05:18
+984	00201656273849	0020105904694	2	4	10.00	2026-04-23 21:58:51
+985	00201684759203	http://www.google.com	3	97011445	0.00	2026-04-23 22:05:06
+986	00201648592031	0020124105075	2	3	20.00	2026-04-23 21:53:17
+987	00201657483920	00201627384950	2	2	0.00	2026-04-23 22:00:34
+988	00201693847562	http://www.youtube.com	3	14466640	0.00	2026-04-23 21:40:13
+989	00201627384950	00201660495837	1	224	0.00	2026-04-23 22:05:08
+990	00201619283745	0020124280160	2	2	20.00	2026-04-23 21:38:26
+991	00201639485762	http://www.google.com	3	7112802	0.00	2026-04-23 21:51:07
+992	00201627384950	00201639485762	2	3	0.00	2026-04-23 22:01:51
+993	00201639485762	0020159461298	2	4	10.00	2026-04-23 21:53:42
+994	00201650394821	http://www.google.com	3	9397645	10.00	2026-04-23 22:22:34
+995	00201656273849	0020122236191	2	2	20.00	2026-04-23 22:25:20
+996	00201639485762	0020105557093	1	437	34.00	2026-04-23 22:05:51
+997	00201657483920	0020128083381	2	5	10.00	2026-04-23 21:33:36
+998	00201634592817	0020155523369	1	141	28.00	2026-04-23 22:13:54
+999	00201639485762	http://www.youtube.com	3	220508	15.00	2026-04-23 21:52:57
+1000	00201634592817	0020105406396	1	297	28.00	2026-04-23 22:12:38
+\.
+
+
+--
+-- Data for Name: cdr_del; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.cdr_del (cdr_id, msisdn, dial_b, service_id, duration_volume, external_fees_amount, cdr_timestamp, deleted_at) FROM stdin;
+50	00201691827364	0020157518798	1	174	13.00	2026-04-21 00:06:47	2026-04-22 22:36:19.254215
+\.
+
+
+--
+-- Data for Name: contract; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.contract (msisdn, credit_limit, balance, customer_id, rateplan_id, created_at) FROM stdin;
+00201619283745	500	0.00	1	1	2026-04-21 12:33:35.964656
+00201650394821	1000	0.00	2	3	2026-04-21 12:33:35.964656
+00201684759203	500	0.00	3	2	2026-04-21 12:33:35.964656
+00201628374619	500	0.00	4	1	2026-04-21 12:33:35.964656
+00201693847562	500	0.00	5	2	2026-04-21 12:33:35.964656
+00201648592031	500	0.00	6	1	2026-04-21 12:33:35.964656
+00201660495837	1000	0.00	7	3	2026-04-21 12:33:35.964656
+00201639485762	500	0.00	8	2	2026-04-21 12:33:35.964656
+00201682736450	500	0.00	9	1	2026-04-21 12:33:35.964656
+00201610293847	1000	0.00	10	3	2026-04-21 12:33:35.964656
+00201657483920	500	0.00	11	2	2026-04-21 12:33:35.964656
+00201691827364	500	0.00	12	1	2026-04-21 12:33:35.964656
+00201645372819	1000	0.00	13	3	2026-04-21 12:33:35.964656
+00201623948576	500	0.00	14	2	2026-04-21 12:33:35.964656
+00201687162534	500	0.00	15	1	2026-04-21 12:33:35.964656
+00201634592817	500	0.00	16	2	2026-04-21 12:33:35.964656
+00201678192034	1000	0.00	17	3	2026-04-21 12:33:35.964656
+00201656273849	500	0.00	18	1	2026-04-21 12:33:35.964656
+00201690485721	500	0.00	19	2	2026-04-21 12:33:35.964656
+00201627384950	1000	0.00	20	3	2026-04-21 12:33:35.964656
+\.
+
+
+--
+-- Data for Name: contract_fee; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.contract_fee (msisdn, fee_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: contract_recurring; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.contract_recurring (msisdn, recurring_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: customer; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.customer (customer_id, email, name, address, created_at) FROM stdin;
+1	mahmoud.salah@email.com	Mahmoud_Salah	Address_1	2026-04-21 12:08:50.707332
+2	marwan.helmy@email.com	Marwan_Helmy	Address_2	2026-04-21 12:08:50.707332
+3	mohamed.ali@email.com	Mohamed_Ali	Address_3	2026-04-21 12:08:50.707332
+4	omar.mahmoud@email.com	Omar_Mahmoud	Address_4	2026-04-21 12:08:50.707332
+5	ahmed.hassan@email.com	Ahmed_Hassan	Address_5	2026-04-21 12:08:50.707332
+6	youssef.adel@email.com	Youssef_Adel	Address_6	2026-04-21 12:08:50.707332
+7	karim.tarek@email.com	Karim_Tarek	Address_7	2026-04-21 12:08:50.707332
+8	mostafa.kamal@email.com	Mostafa_Kamal	Address_8	2026-04-21 12:08:50.707332
+9	hossam.hisham@email.com	Hossam_Hisham	Address_9	2026-04-21 12:08:50.707332
+10	amr.said@email.com	Amr_Said	Address_10	2026-04-21 12:08:50.707332
+11	khaled.nabil@email.com	Khaled_Nabil	Address_11	2026-04-21 12:08:50.707332
+12	rami.malek@email.com	Rami_Malek	Address_12	2026-04-21 12:08:50.707332
+13	eslam.ziad@email.com	Eslam_Ziad	Address_13	2026-04-21 12:08:50.707332
+14	hazem.emam@email.com	Hazem_Emam	Address_14	2026-04-21 12:08:50.707332
+15	sherif.fathy@email.com	Sherif_Fathy	Address_15	2026-04-21 12:08:50.707332
+16	nader.wael@email.com	Nader_Wael	Address_16	2026-04-21 12:08:50.707332
+17	yasser.galal@email.com	Yasser_Galal	Address_17	2026-04-21 12:08:50.707332
+18	ayman.farouk@email.com	Ayman_Farouk	Address_18	2026-04-21 12:08:50.707332
+19	tamer.ashour@email.com	Tamer_Ashour	Address_19	2026-04-21 12:08:50.707332
+20	hassan.mostafa@email.com	Hassan_Mostafa	Address_20	2026-04-21 12:08:50.707332
+\.
+
+
+--
+-- Data for Name: customer_profile; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.customer_profile (msisdn, credit_limit, ror_usage, rateplan_id, free_data_units, free_voice_units, free_sms_units) FROM stdin;
+\.
+
+
+--
+-- Data for Name: invoice; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.invoice (invoice_id, bill_id, pdf_path, discount, generated_at, invoice_status) FROM stdin;
+\.
+
+
+--
+-- Data for Name: onetime_fee; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.onetime_fee (fee_id, name, description, amount, date_apply) FROM stdin;
+\.
+
+
+--
+-- Data for Name: rated_cdr; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.rated_cdr (rated_cdr_id, cdr_id, cdr_status, processed_at) FROM stdin;
+\.
+
+
+--
+-- Data for Name: rateplan; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.rateplan (rateplan_id, name, ror, description, plan_price) FROM stdin;
+1	My_Life_150	0.19	first_rate_plan	150.00
+2	My_Life_250	0.19	second_rate_plan	250.00
+3	My_Life_350	0.19	third_rate_plan	350.00
+\.
+
+
+--
+-- Data for Name: rateplan_service_zone; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.rateplan_service_zone (id, rateplan_id, service_id, zone_id, price_per_volume, unit_deduction) FROM stdin;
+1	1	1	0	0.10	1
+2	1	1	1	0.30	1
+3	1	1	2	0.30	1
+4	1	1	3	0.30	1
+5	1	1	4	0.30	1
+6	2	4	0	0.08	1
+7	2	4	1	0.25	1
+8	2	4	2	0.25	1
+9	2	4	3	0.25	1
+10	2	4	4	0.25	1
+11	2	5	0	0.04	1
+12	2	5	1	0.08	1
+13	2	5	2	0.08	1
+14	2	5	3	0.08	1
+15	2	5	4	0.08	1
+\.
+
+
+--
+-- Data for Name: recurring_service; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.recurring_service (recurring_id, name, description, amount, bill_cycle) FROM stdin;
+\.
+
+
+--
+-- Data for Name: service_package; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.service_package (service_id, service_type, description, rating_price, free_units, zone_id) FROM stdin;
+1	1	Voice service package	0.05	1000	1
+2	2	SMS service package	0.01	300	1
+3	3	DATA service package	0.30	20000	0
+4	1	Voice service package	0.05	2000	0
+5	2	SMS service package	0.01	500	0
+6	3	DATA service package	0.30	30000	0
+7	1	Voice service package	0.05	3000	0
+8	2	SMS service package	0.01	1000	0
+9	3	DATA service package	0.30	5000	0
+\.
+
+
+--
+-- Data for Name: service_rateplan; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.service_rateplan (service_id, rateplan_id) FROM stdin;
+1	1
+2	1
+3	1
+4	2
+5	2
+6	2
+7	3
+8	3
+9	3
+\.
+
+
+--
+-- Data for Name: tariff_zone; Type: TABLE DATA; Schema: public; Owner: neondb_owner
+--
+
+COPY public.tariff_zone (zone_id, dial_prefix, zone_name, description, distenation_name) FROM stdin;
+1	020012	non local	non local calls for orange	orange
+0	020016	local	local calls for TelecoSmart	TelecoSmart
+2	020011	non local	non local calls for orange	etisalat
+3	020010	non local	non local calls for orange	vodafone
+4	020015	non local 	non local calls for orange	we
+\.
+
+
+--
+-- Name: bill_bill_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.bill_bill_id_seq', 1, false);
+
+
+--
+-- Name: cdr_cdr_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.cdr_cdr_id_seq', 1000, true);
+
+
+--
+-- Name: customer_customer_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.customer_customer_id_seq', 1, false);
+
+
+--
+-- Name: invoice_invoice_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.invoice_invoice_id_seq', 1, false);
+
+
+--
+-- Name: onetime_fee_fee_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.onetime_fee_fee_id_seq', 1, false);
+
+
+--
+-- Name: rated_cdr_rated_cdr_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.rated_cdr_rated_cdr_id_seq', 1, false);
+
+
+--
+-- Name: rateplan_rateplan_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.rateplan_rateplan_id_seq', 1, false);
+
+
+--
+-- Name: rateplan_service_zone_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.rateplan_service_zone_id_seq', 15, true);
+
+
+--
+-- Name: recurring_service_recurring_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.recurring_service_recurring_id_seq', 1, false);
+
+
+--
+-- Name: service_package_service_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.service_package_service_id_seq', 1, true);
+
+
+--
+-- Name: tariff_zone_zone_id_seq; Type: SEQUENCE SET; Schema: public; Owner: neondb_owner
+--
+
+SELECT pg_catalog.setval('public.tariff_zone_zone_id_seq', 1, false);
+
+
+--
+-- Name: bill bill_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.bill
+    ADD CONSTRAINT bill_pkey PRIMARY KEY (bill_id);
+
+
+--
+-- Name: cdr cdr_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.cdr
+    ADD CONSTRAINT cdr_pkey PRIMARY KEY (cdr_id);
+
+
+--
+-- Name: contract_fee contract_fee_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_fee
+    ADD CONSTRAINT contract_fee_pkey PRIMARY KEY (msisdn, fee_id);
+
+
+--
+-- Name: contract contract_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract
+    ADD CONSTRAINT contract_pkey PRIMARY KEY (msisdn);
+
+
+--
+-- Name: contract_recurring contract_recurring_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_recurring
+    ADD CONSTRAINT contract_recurring_pkey PRIMARY KEY (msisdn, recurring_id);
+
+
+--
+-- Name: customer customer_email_key; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.customer
+    ADD CONSTRAINT customer_email_key UNIQUE (email);
+
+
+--
+-- Name: customer customer_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.customer
+    ADD CONSTRAINT customer_pkey PRIMARY KEY (customer_id);
+
+
+--
+-- Name: invoice invoice_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.invoice
+    ADD CONSTRAINT invoice_pkey PRIMARY KEY (invoice_id);
+
+
+--
+-- Name: onetime_fee onetime_fee_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.onetime_fee
+    ADD CONSTRAINT onetime_fee_pkey PRIMARY KEY (fee_id);
+
+
+--
+-- Name: rated_cdr rated_cdr_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rated_cdr
+    ADD CONSTRAINT rated_cdr_pkey PRIMARY KEY (rated_cdr_id);
+
+
+--
+-- Name: rateplan rateplan_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rateplan
+    ADD CONSTRAINT rateplan_pkey PRIMARY KEY (rateplan_id);
+
+
+--
+-- Name: rateplan_service_zone rateplan_service_zone_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rateplan_service_zone
+    ADD CONSTRAINT rateplan_service_zone_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: recurring_service recurring_service_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.recurring_service
+    ADD CONSTRAINT recurring_service_pkey PRIMARY KEY (recurring_id);
+
+
+--
+-- Name: service_package service_package_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.service_package
+    ADD CONSTRAINT service_package_pkey PRIMARY KEY (service_id);
+
+
+--
+-- Name: service_rateplan service_rateplan_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.service_rateplan
+    ADD CONSTRAINT service_rateplan_pkey PRIMARY KEY (service_id, rateplan_id);
+
+
+--
+-- Name: tariff_zone tariff_zone_pkey; Type: CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.tariff_zone
+    ADD CONSTRAINT tariff_zone_pkey PRIMARY KEY (zone_id);
+
+
+--
+-- Name: cdr trigger_backup_cdr; Type: TRIGGER; Schema: public; Owner: neondb_owner
+--
+
+CREATE TRIGGER trigger_backup_cdr AFTER DELETE ON public.cdr FOR EACH ROW EXECUTE FUNCTION public.move_to_cdr_del();
+
+
+--
+-- Name: bill bill_msisdn_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.bill
+    ADD CONSTRAINT bill_msisdn_fkey FOREIGN KEY (msisdn) REFERENCES public.contract(msisdn) ON DELETE CASCADE;
+
+
+--
+-- Name: cdr cdr_msisdn_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.cdr
+    ADD CONSTRAINT cdr_msisdn_fkey FOREIGN KEY (msisdn) REFERENCES public.contract(msisdn);
+
+
+--
+-- Name: contract contract_customer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract
+    ADD CONSTRAINT contract_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES public.customer(customer_id) ON DELETE CASCADE;
+
+
+--
+-- Name: contract_fee contract_fee_fee_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_fee
+    ADD CONSTRAINT contract_fee_fee_id_fkey FOREIGN KEY (fee_id) REFERENCES public.onetime_fee(fee_id) ON DELETE RESTRICT;
+
+
+--
+-- Name: contract_fee contract_fee_msisdn_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_fee
+    ADD CONSTRAINT contract_fee_msisdn_fkey FOREIGN KEY (msisdn) REFERENCES public.contract(msisdn) ON DELETE CASCADE;
+
+
+--
+-- Name: contract contract_rateplan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract
+    ADD CONSTRAINT contract_rateplan_id_fkey FOREIGN KEY (rateplan_id) REFERENCES public.rateplan(rateplan_id);
+
+
+--
+-- Name: contract_recurring contract_recurring_msisdn_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_recurring
+    ADD CONSTRAINT contract_recurring_msisdn_fkey FOREIGN KEY (msisdn) REFERENCES public.contract(msisdn) ON DELETE CASCADE;
+
+
+--
+-- Name: contract_recurring contract_recurring_recurring_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.contract_recurring
+    ADD CONSTRAINT contract_recurring_recurring_id_fkey FOREIGN KEY (recurring_id) REFERENCES public.recurring_service(recurring_id) ON DELETE RESTRICT;
+
+
+--
+-- Name: customer_profile customer_profile_msisdn_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.customer_profile
+    ADD CONSTRAINT customer_profile_msisdn_fkey FOREIGN KEY (msisdn) REFERENCES public.contract(msisdn) ON DELETE CASCADE;
+
+
+--
+-- Name: customer_profile customer_profile_rateplan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.customer_profile
+    ADD CONSTRAINT customer_profile_rateplan_id_fkey FOREIGN KEY (rateplan_id) REFERENCES public.rateplan(rateplan_id) ON DELETE CASCADE;
+
+
+--
+-- Name: invoice invoice_bill_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.invoice
+    ADD CONSTRAINT invoice_bill_id_fkey FOREIGN KEY (bill_id) REFERENCES public.bill(bill_id) ON DELETE CASCADE;
+
+
+--
+-- Name: rated_cdr rated_cdr_cdr_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rated_cdr
+    ADD CONSTRAINT rated_cdr_cdr_id_fkey FOREIGN KEY (cdr_id) REFERENCES public.cdr(cdr_id) ON DELETE CASCADE;
+
+
+--
+-- Name: rateplan_service_zone rateplan_service_zone_rateplan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rateplan_service_zone
+    ADD CONSTRAINT rateplan_service_zone_rateplan_id_fkey FOREIGN KEY (rateplan_id) REFERENCES public.rateplan(rateplan_id) ON DELETE CASCADE;
+
+
+--
+-- Name: rateplan_service_zone rateplan_service_zone_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rateplan_service_zone
+    ADD CONSTRAINT rateplan_service_zone_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.service_package(service_id) ON DELETE CASCADE;
+
+
+--
+-- Name: rateplan_service_zone rateplan_service_zone_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.rateplan_service_zone
+    ADD CONSTRAINT rateplan_service_zone_zone_id_fkey FOREIGN KEY (zone_id) REFERENCES public.tariff_zone(zone_id) ON DELETE CASCADE;
+
+
+--
+-- Name: service_package service_package_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.service_package
+    ADD CONSTRAINT service_package_zone_id_fkey FOREIGN KEY (zone_id) REFERENCES public.tariff_zone(zone_id);
+
+
+--
+-- Name: service_rateplan service_rateplan_rateplan_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.service_rateplan
+    ADD CONSTRAINT service_rateplan_rateplan_id_fkey FOREIGN KEY (rateplan_id) REFERENCES public.rateplan(rateplan_id) ON DELETE CASCADE;
+
+
+--
+-- Name: service_rateplan service_rateplan_service_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: neondb_owner
+--
+
+ALTER TABLE ONLY public.service_rateplan
+    ADD CONSTRAINT service_rateplan_service_id_fkey FOREIGN KEY (service_id) REFERENCES public.service_package(service_id) ON DELETE CASCADE;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR SEQUENCES; Type: DEFAULT ACL; Schema: public; Owner: cloud_admin
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE cloud_admin IN SCHEMA public GRANT ALL ON SEQUENCES TO neon_superuser WITH GRANT OPTION;
+
+
+--
+-- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: cloud_admin
+--
+
+ALTER DEFAULT PRIVILEGES FOR ROLE cloud_admin IN SCHEMA public GRANT ALL ON TABLES TO neon_superuser WITH GRANT OPTION;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+\unrestrict jW66roVPk8hsnktGTJnANj6lRuOao3Gh6smw75sqrZB0gLhZjtF9UnqlBzSyuPv
+
