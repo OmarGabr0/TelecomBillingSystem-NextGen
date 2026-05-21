@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --glass-border: rgba(255, 255, 255, 0.07);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glow-blue: rgba(59, 130, 246, 0.15);
+}
+
+@utility glass-card {
+  border-radius: 1rem; /* This is what rounded-2xl means */
+  border-width: 1px;
+  background-color: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border-color: var(--glass-border);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+@utility skeleton {
+  border-radius: 0.5rem;
+  background-color: #18181f;
+  animation: pulse 2s cubic-gradient(0.4, 0, 0.6, 1) infinite;
+}
+
+@utility mono-stat {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.05em;
+}
+
+body {
+  background-color: #09090b;
+  color: #f1f5f9;
+}
