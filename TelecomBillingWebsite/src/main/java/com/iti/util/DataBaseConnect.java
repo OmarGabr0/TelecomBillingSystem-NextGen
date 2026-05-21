@@ -7,17 +7,18 @@ package com.iti.util;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-
+import io.github.cdimascio.dotenv.Dotenv;
 /**
  *
  * @author mahmoud
  */
 
 public class DataBaseConnect {
-
-    private static final String DB_URL  = System.getenv("DB_URL");
-    private static final String DB_USER = System.getenv("DB_USER");
-    private static final String DB_PASS = System.getenv("DB_PASSWORD");
+    
+    private static final Dotenv dotenv = Dotenv.load();
+    private static final String DB_URL  =  dotenv.get("DB_URL");
+    private static final String DB_USER = dotenv.get("DB_USER");
+    private static final String DB_PASS = dotenv.get("DB_PASSWORD");
 
     // Build JDBC URL from environment variables.
     // Set DB_URL to the full JDBC connection string, e.g.:
