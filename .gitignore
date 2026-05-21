@@ -1,25 +1,28 @@
-# 🔴 Maven target folder (compiled files)
+#ignoring unnecessary folders 
+.codebuddy/
+
+#  Maven target folder (compiled files)
 target/
 
-# 🔴 Compiled class files
+# Compiled class files
 *.class
 
-# 🔴 Logs
+#  Logs
 *.log
 
-# 🔴 IDE files
+#  IDE files
 .idea/
 *.iml
 .vscode/
 
-# 🔴 OS files
+#  OS files
 .DS_Store
 Thumbs.db
 
-# 🔴 Environment / configs
+#  Environment / configs
 .env
 
-# 🔴 Temporary files
+#  Temporary files
 *.tmp
 *.swp
 
