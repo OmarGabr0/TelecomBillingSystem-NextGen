@@ -1,5 +1,7 @@
 #ignoring unnecessary folders 
 .codebuddy/
+# ignore .next folder for the advanced frontend module
+TelecomBillingWebsite/src/main/webapp/telecom-next/.next
 
 #  Maven target folder (compiled files)
 target/
