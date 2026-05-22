@@ -1,53 +1,83 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const TOMCAT_URL = process.env.TOMCAT_BASE_URL || "http://localhost:8080/TelecomBillingWebsite";
-// CHECK SESSION STATUS
-export async function GET(req: NextRequest) {
-  const cookieHeader = req.headers.get("cookie") || "";
-  const res = await fetch(`${TOMCAT_URL}/auth`, {
-    method: "GET",
-    headers: { "Cookie": cookieHeader },
-  });
 
-  if (!res.ok) {
-    return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+// 1. GET: Check Session Status
+export async function GET(req: NextRequest) {
+  try {
+    const cookieHeader = req.headers.get("cookie") || "";
+    const res = await fetch(`${TOMCAT_URL}/auth`, {
+      method: "GET",
+      headers: { "Cookie": cookieHeader },
+    });
+
+    if (!res.ok) {
+      return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+    }
+    return NextResponse.json(await res.json());
+  } catch (err) {
+    return NextResponse.json({ error: "Auth server unreachable" }, { status: 500 });
   }
-  return NextResponse.json(await res.json());
 }
 
-// EXECUTE LOGIN (FORWARDS TO SERVLET AS URL-ENCODED FORM DATA)
+// 2. POST: Login (Converts incoming data to URL-encoded parameters for Java)
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const params = new URLSearchParams();
-    params.append("username", body.username || "");
-    params.append("password", body.password || "");
+    
+    // 💡 CRITICAL FIX: Convert JSON to x-www-form-urlencoded so req.getParameter() works!
+    const formParams = new URLSearchParams();
+    formParams.append("username", body.username || "");
+    formParams.append("password", body.password || "");
 
     const response = await fetch(`${TOMCAT_URL}/auth`, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params.toString(),
+      headers: { 
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
+      },
+      body: formParams.toString(),
     });
 
-    const data = await response.json();
-    if (!response.ok) return NextResponse.json(data, { status: response.status });
+    const responseText = await response.text();
+    
+    if (!response.ok) {
+      try {
+        const errJson = JSON.parse(responseText);
+        return NextResponse.json(errJson, { status: response.status });
+      } catch {
+        return NextResponse.json({ error: "Invalid credentials" }, { status: response.status });
+      }
+    }
 
-    // Extract JSESSIONID and pipe it back to user's browser storage
+    const userData = JSON.parse(responseText);
+    const nextRes = NextResponse.json(userData);
+
+    // Forward the JSESSIONID cookie from Tomcat, but rewrite the path to / so
+    // the browser sends it back to the Next.js proxy on subsequent requests.
     const tomcatCookie = response.headers.get("set-cookie");
-    const nextRes = NextResponse.json(data);
-    if (tomcatCookie) nextRes.headers.set("set-cookie", tomcatCookie);
+    if (tomcatCookie) {
+      const rewrittenCookie = tomcatCookie.replace(/Path=\/TelecomBillingWebsite/i, "Path=/");
+      nextRes.headers.set("set-cookie", rewrittenCookie);
+    }
+    
     return nextRes;
   } catch (e) {
+    console.error("Proxy error:", e);
     return NextResponse.json({ error: "Auth proxy connection error" }, { status: 500 });
   }
 }
 
-// LOGOUT REMOVAL
+// 3. DELETE: Logout
 export async function DELETE(req: NextRequest) {
-  const cookieHeader = req.headers.get("cookie") || "";
-  const res = await fetch(`${TOMCAT_URL}/auth`, {
-    method: "DELETE",
-    headers: { "Cookie": cookieHeader },
-  });
-  return NextResponse.json(await res.json());
+  try {
+    const cookieHeader = req.headers.get("cookie") || "";
+    const res = await fetch(`${TOMCAT_URL}/auth`, {
+      method: "DELETE",
+      headers: { "Cookie": cookieHeader },
+    });
+    return NextResponse.json(await res.json());
+  } catch (err) {
+    return NextResponse.json({ error: "Failed to terminate session" }, { status: 500 });
+  }
 }

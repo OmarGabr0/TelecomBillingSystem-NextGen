@@ -167,6 +167,7 @@ public class CustomerServlet extends HttpServlet {
         Customer c = new Customer();
         c.setEmail(extract(body, "email"));
         c.setName(extract(body, "name"));
+        c.setAddress(extract(body, "address"));
 
         CustomerService.updateCustomer(c);
 

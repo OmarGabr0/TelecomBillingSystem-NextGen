@@ -13,7 +13,7 @@ public class CustomerDao {
     private static final Logger LOGGER = Logger.getLogger(CustomerDao.class.getName());
 
     private static final String QRY_INSERT = "INSERT INTO customer (email, name, address) VALUES (?, ?, ?)";
-    private static final String QRY_UPDATE = "UPDATE customer SET name=? WHERE email=?";
+    private static final String QRY_UPDATE = "UPDATE customer SET name=?, address=? WHERE email=?";
     private static final String QRY_DELETE = "DELETE FROM customer WHERE email=?";
 
     public static List<Customer> getAll(int limit, int offset, String sortBy, String sortOrder, String searchQuery) {
@@ -110,7 +110,8 @@ public class CustomerDao {
                 PreparedStatement ps = conn.prepareStatement(QRY_UPDATE)) {
 
             ps.setString(1, c.getName());
-            ps.setString(2, c.getEmail());
+            ps.setString(2, c.getAddress());
+            ps.setString(3, c.getEmail());
             ps.executeUpdate();
 
         } catch (SQLException e) {

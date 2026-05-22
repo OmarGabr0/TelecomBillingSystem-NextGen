@@ -29,7 +29,7 @@ export default function LoginPage() {
       }
 
       // Check role returned from native com.iti.model.User object
-      if (data.role === "ADMIN") {
+      if (data.role?.toLowerCase() === "admin") {
         router.push("/admin");
       } else {
         router.push("/user");
