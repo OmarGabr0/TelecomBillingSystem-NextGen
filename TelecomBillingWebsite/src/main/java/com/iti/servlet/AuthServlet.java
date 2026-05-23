@@ -16,7 +16,6 @@ import java.io.*;
  *
  * @author mahmoud
  */
-@WebServlet("/auth")
 public class AuthServlet extends HttpServlet {
 
     @Override

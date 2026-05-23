@@ -14,7 +14,6 @@ import java.io.*;
  * @author mahmoud
  */
 
-@WebServlet("/profiles/*")
 public class ProfileServlet extends HttpServlet {
 
     @Override

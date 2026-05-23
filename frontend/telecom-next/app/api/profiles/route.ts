@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const { searchParams, pathname } = new URL(req.url);
     const subPath = pathname.replace("/api/profiles", "");
 
-    const response = await fetch(`${TOMCAT_URL}/profiles${subPath}?${searchParams.toString()}`, {
+    const response = await fetch(`${TOMCAT_URL}${subPath}?${searchParams.toString()}`, {
       method: "GET",
       headers: { "Cookie": cookieHeader }
     });
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       formParams.append(key, String(value));
     }
 
-    const response = await fetch(`${TOMCAT_URL}/profiles${subPath}`, {
+    const response = await fetch(`${TOMCAT_URL}${subPath}`, {
       method: "POST",
       headers: { 
         "Cookie": cookieHeader,
