@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import LogoHeroFlow from "../../components/logo/LogoHeroFlow";
+import LogoHeroEnhanced from "@/components/logo/LogoHeroEnhanced";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -46,6 +48,7 @@ export default function LoginPage() {
       {/* Dynamic Background Glow Effect */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent-blue/10 rounded-full blur-[120px] pointer-events-none" />
 
+      <LogoHeroFlow />
       <div className="w-full max-w-md p-8 glass-card animate-fade-up">
         {/* Header Block */}
         <div className="text-center mb-8">
