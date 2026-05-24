@@ -284,13 +284,20 @@ export default function UserDashboard() {
           <div className="glass-card p-6">
             <h3 className="text-lg font-semibold text-white mb-3">Available plans</h3>
             <div className="space-y-4">
-              {rateplans.map((plan) => (
-                <div key={plan.rateplan_id} className="rounded-3xl border border-surface-800 bg-surface-900 p-4">
-                  <p className="text-sm text-slate-400">{plan.name}</p>
-                  <p className="mt-2 text-xl font-semibold text-white">${plan.plan_price.toFixed(2)}</p>
-                  <p className="text-xs text-slate-500 mt-1">{plan.ror}% rate · {plan.free_units} free units</p>
-                </div>
-              ))}
+              {rateplans.map((plan, index) => {
+                const price = Number(plan.plan_price ?? 0);
+                const ror = Number(plan.ror ?? 0);
+                const freeUnits = Number(plan.free_units ?? 0);
+                const planKey = plan.rateplan_id ?? `${plan.name}-${index}`;
+
+                return (
+                  <div key={planKey} className="rounded-3xl border border-surface-800 bg-surface-900 p-4">
+                    <p className="text-sm text-slate-400">{plan.name}</p>
+                    <p className="mt-2 text-xl font-semibold text-white">${price.toFixed(2)}</p>
+                    <p className="text-xs text-slate-500 mt-1">{ror}% rate · {freeUnits} free units</p>
+                  </div>
+                );
+              })}
               {rateplans.length === 0 && <p className="text-sm text-slate-400">No plans loaded.</p>}
             </div>
           </div>
@@ -298,13 +305,18 @@ export default function UserDashboard() {
           <div className="glass-card p-6">
             <h3 className="text-lg font-semibold text-white mb-3">Available add-ons</h3>
             <div className="space-y-4">
-              {services.slice(0, 3).map((service) => (
-                <div key={service.id} className="rounded-3xl border border-surface-800 bg-surface-900 p-4">
-                  <p className="text-sm text-slate-400">{service.name}</p>
-                  <p className="mt-2 text-sm text-slate-200">Rate: ${service.price.toFixed(2)} · {service.units} units</p>
-                  <p className="text-xs text-slate-500 mt-1">Type: {service.type}</p>
-                </div>
-              ))}
+              {services.slice(0, 3).map((service, index) => {
+                const serviceKey = service.id ?? `${service.name}-${index}`;
+                const price = Number(service.price ?? 0);
+                const units = Number(service.units ?? 0);
+                return (
+                  <div key={serviceKey} className="rounded-3xl border border-surface-800 bg-surface-900 p-4">
+                    <p className="text-sm text-slate-400">{service.name}</p>
+                    <p className="mt-2 text-sm text-slate-200">Rate: ${price.toFixed(2)} · {units} units</p>
+                    <p className="text-xs text-slate-500 mt-1">Type: {service.type}</p>
+                  </div>
+                );
+              })}
               {services.length === 0 && <p className="text-sm text-slate-400">No service packages available.</p>}
             </div>
           </div>
@@ -312,13 +324,17 @@ export default function UserDashboard() {
           <div className="glass-card p-6">
             <h3 className="text-lg font-semibold text-white mb-3">Current fees</h3>
             <div className="space-y-4">
-              {fees.slice(0, 3).map((fee) => (
-                <div key={fee.id} className="rounded-3xl border border-surface-800 bg-surface-900 p-4">
-                  <p className="text-sm text-slate-400">{fee.name}</p>
-                  <p className="mt-2 text-sm text-slate-200">${fee.amount.toFixed(2)}</p>
-                  <p className="text-xs text-slate-500 mt-1">{fee.type}</p>
-                </div>
-              ))}
+              {fees.slice(0, 3).map((fee, index) => {
+                const feeKey = fee.id ?? `${fee.name}-${index}`;
+                const amount = Number(fee.amount ?? 0);
+                return (
+                  <div key={feeKey} className="rounded-3xl border border-surface-800 bg-surface-900 p-4">
+                    <p className="text-sm text-slate-400">{fee.name}</p>
+                    <p className="mt-2 text-sm text-slate-200">${amount.toFixed(2)}</p>
+                    <p className="text-xs text-slate-500 mt-1">{fee.type}</p>
+                  </div>
+                );
+              })}
               {fees.length === 0 && <p className="text-sm text-slate-400">No fees loaded.</p>}
             </div>
           </div>
