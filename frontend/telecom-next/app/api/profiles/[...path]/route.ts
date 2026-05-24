@@ -19,14 +19,12 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST handler to match your req.getParameter updates for creating plans/fees
 export async function POST(req: NextRequest) {
   try {
     const cookieHeader = req.headers.get("cookie") || "";
     const { pathname } = new URL(req.url);
     const subPath = pathname.replace("/api/profiles", "");
 
-    // Convert incoming JSON body into URL-encoded data parameters for your req.getParameter lookups
     const body = await req.json();
     const formParams = new URLSearchParams();
     for (const [key, value] of Object.entries(body)) {
@@ -35,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     const response = await fetch(`${TOMCAT_URL}/api/profiles${subPath}`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Cookie": cookieHeader,
         "Content-Type": "application/x-www-form-urlencoded"
       },

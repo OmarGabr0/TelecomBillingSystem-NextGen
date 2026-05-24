@@ -6,7 +6,7 @@ const TOMCAT_URL = process.env.TOMCAT_BASE_URL || "http://localhost:8080/Telecom
 export async function GET(req: NextRequest) {
   try {
     const cookieHeader = req.headers.get("cookie") || "";
-    const res = await fetch(`${TOMCAT_URL}/auth`, {
+    const res = await fetch(`${TOMCAT_URL}/api/auth`, {
       method: "GET",
       headers: { "Cookie": cookieHeader },
     });
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     formParams.append("username", body.username || "");
     formParams.append("password", body.password || "");
 
-    const response = await fetch(`${TOMCAT_URL}/auth`, {
+    const response = await fetch(`${TOMCAT_URL}/api/auth`, {
       method: "POST",
       headers: { 
         "Content-Type": "application/x-www-form-urlencoded",
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const cookieHeader = req.headers.get("cookie") || "";
-    const res = await fetch(`${TOMCAT_URL}/auth`, {
+    const res = await fetch(`${TOMCAT_URL}/api/auth`, {
       method: "DELETE",
       headers: { "Cookie": cookieHeader },
     });
