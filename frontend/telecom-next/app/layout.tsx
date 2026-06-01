@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import LogoHeaderNodes from "@/components/logo/LogoHeaderNodes";
+import ToastContainer from "./components/ui/ToastContainer";
 
 export const metadata: Metadata = {
   title: "TelecoSmart — Billing Platform",
