@@ -66,7 +66,7 @@ public class ContractDao {
         return -1;
     }
 
-    private static final String QRY_ADD_PROFILE = "INSERT INTO customer_profile (msisdn, credit_limit, ror_usage, rateplan_id, data_units, voice_units, sms_units, free_units) VALUES (?, ?, 0, ?, 0, 0, 0, 0)";
+    private static final String QRY_ADD_PROFILE = "INSERT INTO customer_profile (msisdn, credit_limit, ror_usage, rateplan_id, free_data_units, free_voice_units, free_sms_units, free_data_units) VALUES (?, ?, 0, ?, 0, 0, 0, 0)";
 
     public static boolean addContract(String email, String msisdn, int rateplanId, int creditLimit, double balance) throws Exception {
         try (Connection conn = DataBaseConnect.connect()) {

@@ -13,8 +13,8 @@ public class ProfileDao {
 
     private static final String QRY_RATEPLANS = "SELECT rateplan_id, name, ror, plan_price, free_units FROM rateplan ORDER BY %s %s LIMIT ? OFFSET ?";
     private static final String QRY_ADD_RATEPLAN = "INSERT INTO rateplan (name, ror, description, plan_price, free_units) VALUES (?, ?, ?, ?, ?)";
-    private static final String QRY_SERVICES = "SELECT service_id, description, rating_price, service_type, units FROM service_package";
-    private static final String QRY_ADD_SERVICE = "INSERT INTO service_package (service_type, description, rating_price, units, zone_id) VALUES (?, ?, ?, ?, ?)";
+    private static final String QRY_SERVICES = "SELECT service_id, description, rating_price, service_type, free_units FROM service_package";
+    private static final String QRY_ADD_SERVICE = "INSERT INTO service_package (service_type, description, rating_price, free_units, zone_id) VALUES (?, ?, ?, ?, ?)";
 
     private static final String QRY_ALL_FEES_BASE = "SELECT * FROM (" +
             "SELECT recurring_id as id, name, description, amount, 'recurring' as type FROM recurring_service " +
@@ -32,20 +32,20 @@ public class ProfileDao {
 
     private static final String QRY_INS_SERVICE_RATEPLAN = "INSERT INTO service_rateplan (rateplan_id, service_id) VALUES (?, ?)";
 
-    private static final String QRY_RATEPLAN_SERVICES = "SELECT sp.service_id, sp.description, sp.rating_price, sp.service_type, sp.units "
+    private static final String QRY_RATEPLAN_SERVICES = "SELECT sp.service_id, sp.description, sp.rating_price, sp.service_type, sp.free_units "
             +
             "FROM service_package sp JOIN service_rateplan sr ON sp.service_id = sr.service_id WHERE sr.rateplan_id = ?";
 
-    private static final String QRY_ADD_RECURRING = "INSERT INTO recurring_service (name, description, amount) VALUES (?, ?, ?)";
+    private static final String QRY_ADD_RECURRING = "INSERT INTO recurring_service (name, description, amount, bill_cycle) VALUES (?, ?, ?, ?)";
     private static final String QRY_ADD_ONETIME_FEE = "INSERT INTO onetime_fee (name, description, amount) VALUES (?, ?, ?)";
 
     private static final String QRY_CUSTOMER_PROFILES = "SELECT c.name as customer_name, cp.msisdn, "
             + "cp.credit_limit, cp.ror_usage, "
-            + "cp.data_units as rem_data, cp.voice_units as rem_voice, cp.sms_units as rem_sms, cp.free_units as rem_free, "
+            + "cp.free_data_units as rem_data, cp.free_voice_units as rem_voice, cp.free_sms_units as rem_sms, cp.free_data_units as rem_free, "
             + "r.name as rateplan_name, r.free_units as total_free, "
-            + "(SELECT COALESCE(SUM(sp.units), 0) FROM service_rateplan sr JOIN service_package sp ON sr.service_id = sp.service_id WHERE sr.rateplan_id = cp.rateplan_id AND sp.service_type = 1) as total_voice, "
-            + "(SELECT COALESCE(SUM(sp.units), 0) FROM service_rateplan sr JOIN service_package sp ON sr.service_id = sp.service_id WHERE sr.rateplan_id = cp.rateplan_id AND sp.service_type = 2) as total_sms, "
-            + "(SELECT COALESCE(SUM(sp.units), 0) FROM service_rateplan sr JOIN service_package sp ON sr.service_id = sp.service_id WHERE sr.rateplan_id = cp.rateplan_id AND sp.service_type = 3) as total_data "
+            + "(SELECT COALESCE(SUM(sp.free_units), 0) FROM service_rateplan sr JOIN service_package sp ON sr.service_id = sp.service_id WHERE sr.rateplan_id = cp.rateplan_id AND sp.service_type = 1) as total_voice, "
+            + "(SELECT COALESCE(SUM(sp.free_units), 0) FROM service_rateplan sr JOIN service_package sp ON sr.service_id = sp.service_id WHERE sr.rateplan_id = cp.rateplan_id AND sp.service_type = 2) as total_sms, "
+            + "(SELECT COALESCE(SUM(sp.free_units), 0) FROM service_rateplan sr JOIN service_package sp ON sr.service_id = sp.service_id WHERE sr.rateplan_id = cp.rateplan_id AND sp.service_type = 3) as total_data "
             + "FROM customer_profile cp "
             + "JOIN contract co ON cp.msisdn = co.msisdn "
             + "JOIN customer c ON co.customer_id = c.customer_id "
@@ -268,6 +268,7 @@ public class ProfileDao {
             ps.setString(1, name);
             ps.setString(2, description);
             ps.setDouble(3, amount);
+            ps.setString(4, "monthly");
             ps.executeUpdate();
         }
     }

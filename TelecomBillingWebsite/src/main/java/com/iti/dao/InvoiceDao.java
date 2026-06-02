@@ -18,19 +18,20 @@ public class InvoiceDao {
             sortOrder = "DESC";
         }
         
-        String dbSortBy = "i.created_at";
+        String dbSortBy = "b.bill_date";
         if ("total".equals(sortBy)) {
-            dbSortBy = "i.total";
+            dbSortBy = "b.total_amount";
         } else if ("status".equals(sortBy)) {
             dbSortBy = "i.invoice_status";
         } else if ("id".equals(sortBy)) {
             dbSortBy = "i.invoice_id";
         }
 
-        String sql = "SELECT i.invoice_id, i.msisdn, i.billing_start, i.billing_end, " +
-                     "i.sub_total, i.tax, i.total, i.invoice_status, i.pdf_path " +
+        String sql = "SELECT i.invoice_id, i.msisdn, b.bill_date as billing_start, b.bill_date as billing_end, " +
+                     "b.total_usage as sub_total, b.taxes as tax, b.total_amount as total, i.invoice_status, i.pdf_path " +
                      "FROM invoice i " +
-                     "JOIN contract co ON i.msisdn = co.msisdn " +
+                     "JOIN bill b ON i.bill_id = b.bill_id " +
+                     "JOIN contract co ON b.msisdn = co.msisdn " +
                      "JOIN customer cu ON co.customer_id = cu.customer_id " +
                      "WHERE cu.email = ? " +
                      "ORDER BY " + dbSortBy + " " + sortOrder + " LIMIT ? OFFSET ?";
