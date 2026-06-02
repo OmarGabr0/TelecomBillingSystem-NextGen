@@ -5,11 +5,13 @@ import { motion } from 'framer-motion';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 
+type Tab = 'overview' | 'customers' | 'profiles' | 'contracts' | 'analytics';
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   title?: string;
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
+  activeTab?: Tab;
+  onTabChange?: (tab: Tab) => void;
   onLogout?: () => void;
   userInfo?: {
     name: string;

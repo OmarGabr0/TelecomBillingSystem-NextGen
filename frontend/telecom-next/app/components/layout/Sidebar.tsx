@@ -4,18 +4,20 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, BarChart3, Users, FileText, Zap, Settings, LogOut, Home } from 'lucide-react';
 
+type Tab = 'overview' | 'customers' | 'profiles' | 'contracts' | 'analytics';
+
 interface SidebarProps {
-  activeTab?: string;
-  onTabChange?: (tab: string) => void;
+  activeTab?: Tab;
+  onTabChange?: (tab: Tab) => void;
   onLogout?: () => void;
 }
 
 const navItems = [
-  { id: 'overview', label: 'Overview', icon: Home },
-  { id: 'customers', label: 'Customers', icon: Users },
-  { id: 'profiles', label: 'Rate Plans', icon: Zap },
-  { id: 'contracts', label: 'Contracts', icon: FileText },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+  { id: 'overview' as const, label: 'Overview', icon: Home },
+  { id: 'customers' as const, label: 'Customers', icon: Users },
+  { id: 'profiles' as const, label: 'Rate Plans', icon: Zap },
+  { id: 'contracts' as const, label: 'Contracts', icon: FileText },
+  { id: 'analytics' as const, label: 'Analytics', icon: BarChart3 },
 ];
 
 export default function Sidebar({ activeTab = 'overview', onTabChange, onLogout }: SidebarProps) {
@@ -62,7 +64,7 @@ export default function Sidebar({ activeTab = 'overview', onTabChange, onLogout 
     }),
   };
 
-  const handleTabClick = (tabId: string) => {
+  const handleTabClick = (tabId: Tab) => {
     onTabChange?.(tabId);
     setIsOpen(false);
   };

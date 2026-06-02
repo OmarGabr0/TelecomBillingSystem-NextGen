@@ -593,8 +593,8 @@ export default function AdminDashboard() {
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold text-white mb-6">Subscription Heatmap</h3>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-72 w-full" style={{ minHeight: 260, minWidth: 200 }}>
+              <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={rateplanChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1f1f2b" vertical={false} />
                   <XAxis dataKey="name" stroke="#94a3b8" tickLine={false} />
@@ -610,8 +610,8 @@ export default function AdminDashboard() {
         <Card>
           <div className="p-6">
             <h3 className="text-lg font-semibold text-white mb-6">Usage Distribution</h3>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-72 w-full" style={{ minHeight: 260, minWidth: 200 }}>
+              <ResponsiveContainer width="100%" height={260}>
                 <PieChart>
                   <Pie data={usageChartData} innerRadius={50} outerRadius={90} dataKey="units" nameKey="name" paddingAngle={4}>
                     {usageChartData.map((entry, index) => (
@@ -816,12 +816,12 @@ export default function AdminDashboard() {
                   <th className="px-6 py-3 text-left font-semibold text-slate-300">ROR</th>
                 </tr>
               </thead>
-              <tbody>
-                {rateplans.map((plan) => (
-                  <tr key={plan.rateplan_id} className="border-b border-white/5 hover:bg-white/[0.02]">
+<tbody>
+                {rateplans.map((plan, index) => (
+                  <tr key={plan.rateplan_id ?? index} className="border-b border-white/5 hover:bg-white/[0.02]">
                     <td className="px-6 py-3 text-white">{plan.name}</td>
-                    <td className="px-6 py-3 text-white">${plan.plan_price.toFixed(2)}</td>
-                    <td className="px-6 py-3 text-slate-300">{plan.ror}%</td>
+                    <td className="px-6 py-3 text-white">${plan.plan_price != null ? plan.plan_price.toFixed(2) : '--'}</td>
+                    <td className="px-6 py-3 text-slate-300">{plan.ror ?? '--'}%</td>
                   </tr>
                 ))}
               </tbody>
@@ -842,12 +842,12 @@ export default function AdminDashboard() {
                   <th className="px-6 py-3 text-left font-semibold text-slate-300">Price</th>
                 </tr>
               </thead>
-              <tbody>
-                {services.map((service) => (
-                  <tr key={service.id} className="border-b border-white/5 hover:bg-white/[0.02]">
+<tbody>
+                {services.map((service, index) => (
+                  <tr key={service.id ?? index} className="border-b border-white/5 hover:bg-white/[0.02]">
                     <td className="px-6 py-3 text-white">{service.name}</td>
                     <td className="px-6 py-3"><Badge variant="info">{service.type}</Badge></td>
-                    <td className="px-6 py-3 text-white">${service.price.toFixed(2)}</td>
+                    <td className="px-6 py-3 text-white">${service.price != null ? service.price.toFixed(2) : '--'}</td>
                   </tr>
                 ))}
               </tbody>

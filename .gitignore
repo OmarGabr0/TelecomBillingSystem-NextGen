@@ -1,8 +1,11 @@
 #ignoring unnecessary folders 
+gitignore
 .codebuddy/
 claude_prompt_for_documentation.md
 add_users_table.sql
 seed_test_user.sql
+project_rules.md
+Documentation.md
 # ignore .next folder for the advanced frontend module
 TelecomBillingWebsite/src/main/webapp/telecom-next/.next
 
