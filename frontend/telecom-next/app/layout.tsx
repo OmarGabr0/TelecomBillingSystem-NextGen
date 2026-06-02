@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import LogoHeaderNodes from "@/components/logo/LogoHeaderNodes";
+import ToastContainer from "./components/ui/ToastContainer";
 
 export const metadata: Metadata = {
   title: "TelecoSmart — Billing Platform",
@@ -13,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" data-scroll-behavior="smooth">
       <head>
         <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
       </head>
@@ -22,6 +23,7 @@ export default function RootLayout({
           <LogoHeaderNodes />
         </header>
         {children}
+        <ToastContainer />
       </body>
     </html>
   );

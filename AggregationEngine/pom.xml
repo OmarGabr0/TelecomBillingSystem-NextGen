@@ -49,7 +49,7 @@
                 </configuration>
             </plugin>
 
-            <!-- FAT JAR (IMPORTANT) -->
+<!-- FAT JAR (IMPORTANT) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -72,7 +72,6 @@
                             </transformers>
 
                         </configuration>
-
                     </execution>
                 </executions>
 

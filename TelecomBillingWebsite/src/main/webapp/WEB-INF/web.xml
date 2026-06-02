@@ -22,9 +22,27 @@
         <servlet-name>AuthServlet</servlet-name>
         <servlet-class>com.iti.servlet.AuthServlet</servlet-class>
     </servlet>
-    <servlet-mapping>
+<servlet-mapping>
         <servlet-name>AuthServlet</servlet-name>
         <url-pattern>/api/auth</url-pattern>
     </servlet-mapping>
-    
+
+    <servlet>
+        <servlet-name>CustomerServlet</servlet-name>
+        <servlet-class>com.iti.servlet.CustomerServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>CustomerServlet</servlet-name>
+        <url-pattern>/api/customer/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ContractServlet</servlet-name>
+        <servlet-class>com.iti.servlet.ContractServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ContractServlet</servlet-name>
+        <url-pattern>/api/contract</url-pattern>
+    </servlet-mapping>
+
 </web-app>
