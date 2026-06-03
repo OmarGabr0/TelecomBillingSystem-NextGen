@@ -262,7 +262,7 @@ TelecomBillingSystem-NextGen/
  ![ERD](Billing_ERD.jpeg) 
  
  #System
-![system](Billing_System.jpeg) 
+![system](Billing_workflow.jpeg) 
 
 
 ---
